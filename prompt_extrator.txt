@@ -1,0 +1,36 @@
+PROMPT PARA EXTRAIR JOGADAS DE XADREZ
+=====================================
+
+Copie o prompt abaixo e use com qualquer LLM (ChatGPT, Claude, etc.) junto com um print da partida:
+
+---
+
+Analise esta imagem de uma partida de xadrez e extraia TODAS as jogadas feitas até o momento.
+
+Retorne APENAS as jogadas no seguinte formato, sem explicações:
+
+```
+e4 e5 Nf3 Nc6 Bb5 a6
+```
+
+Regras:
+1. Use notação algébrica padrão (SAN): e4, Nf3, Bb5, O-O, Qxd4, etc.
+2. Separe cada jogada por espaço
+3. NÃO inclua números de lance (1. 2. 3.)
+4. NÃO inclua comentários ou análises
+5. NÃO inclua resultado (1-0, 0-1, 1/2-1/2)
+6. Se houver promoção, use = (ex: e8=Q)
+7. Se houver roque, use O-O (curto) ou O-O-O (longo)
+
+Se a imagem mostrar o tabuleiro mas não as jogadas, descreva a posição em FEN.
+
+---
+
+EXEMPLO DE USO:
+1. Tire um print da sua partida (Chess.com, Lichess, app, etc.)
+2. Cole o prompt acima + a imagem no ChatGPT/Claude
+3. Copie a resposta
+4. Cole no modo análise do Xadrez Terminal
+
+DICA: No Chess.com e Lichess, as jogadas geralmente aparecem em uma lista lateral.
+Se o print mostrar essa lista, o LLM consegue extrair facilmente.
