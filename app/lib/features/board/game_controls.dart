@@ -52,18 +52,22 @@ class _GameControlsState extends ConsumerState<GameControls> {
             ),
             const SizedBox(height: 8),
             FilledButton(
-              onPressed: () => controller.newGame(
-                playerSide: Side.white,
-                skillLevel: _skill.round(),
-              ),
+              onPressed: state.engineThinking
+                  ? null
+                  : () => controller.newGame(
+                        playerSide: Side.white,
+                        skillLevel: _skill.round(),
+                      ),
               child: const Text('Jogar de brancas'),
             ),
             const SizedBox(height: 8),
             FilledButton.tonal(
-              onPressed: () => controller.newGame(
-                playerSide: Side.black,
-                skillLevel: _skill.round(),
-              ),
+              onPressed: state.engineThinking
+                  ? null
+                  : () => controller.newGame(
+                        playerSide: Side.black,
+                        skillLevel: _skill.round(),
+                      ),
               child: const Text('Jogar de pretas'),
             ),
             const SizedBox(height: 24),

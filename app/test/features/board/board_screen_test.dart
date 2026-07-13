@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chessground/chessground.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,6 +61,24 @@ void main() {
 
     expect(find.textContaining('e4'), findsWidgets);
   });
+
+  testWidgets('botões de nova partida desabilitam enquanto o engine pensa',
+      (tester) async {
+    await tester.pumpWidget(makeApp(FakeEngineNeverReplies()));
+    await tester.pumpAndSettle();
+
+    // Engine abre jogando de pretas e fica "pensando" para sempre.
+    await tester.tap(find.text('Jogar de pretas'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Stockfish pensando…'), findsOneWidget);
+
+    final whiteButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Jogar de brancas'),
+    );
+    expect(whiteButton.onPressed, isNull);
+  });
 }
 
 class FakeEngineOpeningE4 implements ChessEngineApi {
@@ -67,6 +87,17 @@ class FakeEngineOpeningE4 implements ChessEngineApi {
 
   @override
   Future<String?> bestMoveFromFen(String fen) async => 'e2e4';
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class FakeEngineNeverReplies implements ChessEngineApi {
+  @override
+  Future<void> setSkillLevel(int level) async {}
+
+  @override
+  Future<String?> bestMoveFromFen(String fen) => Completer<String?>().future;
 
   @override
   Future<void> dispose() async {}
