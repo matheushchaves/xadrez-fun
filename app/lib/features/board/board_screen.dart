@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../engine/engine_provider.dart';
 import '../play/game_controller.dart';
+import 'game_controls.dart';
 
 /// Tela principal: tabuleiro à esquerda, controles à direita.
 class BoardScreen extends ConsumerStatefulWidget {
@@ -106,8 +107,7 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                     ),
                   ),
                 ),
-                // Task 6 substitui por GameControls.
-                const SizedBox(width: 280),
+                const GameControls(),
               ],
             ),
           ),

@@ -37,4 +37,37 @@ void main() {
     expect(find.textContaining('brew install stockfish'), findsOneWidget);
     expect(find.byType(Chessboard), findsOneWidget);
   });
+
+  testWidgets('painel mostra status e controles de nova partida',
+      (tester) async {
+    await tester.pumpWidget(makeApp(FakeEngine()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sua vez.'), findsOneWidget);
+    expect(find.text('Jogar de brancas'), findsOneWidget);
+    expect(find.text('Jogar de pretas'), findsOneWidget);
+    expect(find.byType(Slider), findsOneWidget);
+  });
+
+  testWidgets('nova partida de pretas: engine abre e histórico aparece',
+      (tester) async {
+    await tester.pumpWidget(makeApp(FakeEngineOpeningE4()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Jogar de pretas'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('e4'), findsWidgets);
+  });
+}
+
+class FakeEngineOpeningE4 implements ChessEngineApi {
+  @override
+  Future<void> setSkillLevel(int level) async {}
+
+  @override
+  Future<String?> bestMoveFromFen(String fen) async => 'e2e4';
+
+  @override
+  Future<void> dispose() async {}
 }
