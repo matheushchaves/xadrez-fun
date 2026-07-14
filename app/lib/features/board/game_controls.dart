@@ -2,6 +2,7 @@ import 'package:dartchess/dartchess.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../analysis/analysis_panel.dart';
 import '../play/game_controller.dart';
 
 /// Painel lateral: status da partida, nível do engine, nova partida
@@ -55,9 +56,9 @@ class _GameControlsState extends ConsumerState<GameControls> {
               onPressed: state.engineThinking
                   ? null
                   : () => controller.newGame(
-                        playerSide: Side.white,
-                        skillLevel: _skill.round(),
-                      ),
+                      playerSide: Side.white,
+                      skillLevel: _skill.round(),
+                    ),
               child: const Text('Jogar de brancas'),
             ),
             const SizedBox(height: 8),
@@ -65,11 +66,13 @@ class _GameControlsState extends ConsumerState<GameControls> {
               onPressed: state.engineThinking
                   ? null
                   : () => controller.newGame(
-                        playerSide: Side.black,
-                        skillLevel: _skill.round(),
-                      ),
+                      playerSide: Side.black,
+                      skillLevel: _skill.round(),
+                    ),
               child: const Text('Jogar de pretas'),
             ),
+            const SizedBox(height: 24),
+            const AnalysisPanel(),
             const SizedBox(height: 24),
             Text('Lances', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
