@@ -19,6 +19,10 @@ class FakeEngine implements ChessEngineApi {
   Future<EngineEval?> evaluateFen(String fen) async => null;
 
   @override
+  Future<List<EngineLine>> topMovesFromFen(String fen, {int count = 3}) async =>
+      const [];
+
+  @override
   Future<void> dispose() async {}
 }
 
@@ -98,6 +102,10 @@ class FakeEngineOpeningE4 implements ChessEngineApi {
   Future<EngineEval?> evaluateFen(String fen) async => null;
 
   @override
+  Future<List<EngineLine>> topMovesFromFen(String fen, {int count = 3}) async =>
+      const [];
+
+  @override
   Future<void> dispose() async {}
 }
 
@@ -110,6 +118,10 @@ class FakeEngineNeverReplies implements ChessEngineApi {
 
   @override
   Future<EngineEval?> evaluateFen(String fen) async => null;
+
+  @override
+  Future<List<EngineLine>> topMovesFromFen(String fen, {int count = 3}) async =>
+      const [];
 
   @override
   Future<void> dispose() async {}

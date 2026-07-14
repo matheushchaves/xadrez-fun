@@ -50,6 +50,8 @@ class UciEngine implements ChessEngineApi {
   Future<void> _queue = Future.value();
 
   static final _scoreRe = RegExp(r'score (cp|mate) (-?\d+)');
+  static final _multipvRe = RegExp(r'\bmultipv (\d+)\b');
+  static final _pvRe = RegExp(r'\bpv ([a-h][1-8][a-h][1-8][qrbn]?)');
 
   /// Serializa operações UCI: o Stockfish é um processo único e comandos
   /// intercalados de chamadas concorrentes corromperiam as respostas.
@@ -101,6 +103,33 @@ class UciEngine implements ChessEngineApi {
     // perspectiva das brancas (semântica do app Python).
     final blackToMove = fen.split(' ')[1] == 'b';
     return blackToMove ? last.flipped : last;
+  });
+
+  @override
+  Future<List<EngineLine>> topMovesFromFen(
+    String fen, {
+    int count = 3,
+  }) => _serialized(() async {
+    _io.send('setoption name MultiPV value $count');
+    _io.send('position fen $fen');
+    _io.send('go depth $depth');
+    final collected = <int, EngineLine>{};
+    await for (final line in _io.lines) {
+      final pvMatch = _pvRe.firstMatch(line);
+      final scoreMatch = _scoreRe.firstMatch(line);
+      if (pvMatch != null && scoreMatch != null) {
+        final index = int.parse(_multipvRe.firstMatch(line)?.group(1) ?? '1');
+        final value = int.parse(scoreMatch.group(2)!);
+        collected[index] = EngineLine(
+          uci: pvMatch.group(1)!,
+          eval: scoreMatch.group(1) == 'cp' ? CpEval(value) : MateEval(value),
+        );
+      }
+      if (line.startsWith('bestmove')) break;
+    }
+    _io.send('setoption name MultiPV value 1');
+    final indices = collected.keys.toList()..sort();
+    return [for (final i in indices) collected[i]!];
   });
 
   @override

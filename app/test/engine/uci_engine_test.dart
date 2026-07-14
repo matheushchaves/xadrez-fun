@@ -189,4 +189,82 @@ void main() {
       'go depth 12',
     ]);
   });
+
+  test('topMovesFromFen configura MultiPV, coleta linhas e restaura', () async {
+    final io = FakeEngineIo({
+      'uci': ['uciok'],
+      'isready': ['readyok'],
+      'go depth': [
+        'info depth 11 multipv 1 score cp 30 pv e2e4 e7e5',
+        'info depth 12 multipv 1 score cp 35 nodes 9000 pv e2e4 e7e5',
+        'info depth 12 multipv 2 score cp 20 nodes 9000 pv d2d4 d7d5',
+        'info depth 12 multipv 3 score mate 5 nodes 9000 pv g1f3 g8f6',
+        'bestmove e2e4 ponder e7e5',
+      ],
+    });
+    final engine = UciEngine(io);
+    await engine.init();
+
+    const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    final lines = await engine.topMovesFromFen(fen, count: 3);
+
+    expect(io.sent, contains('setoption name MultiPV value 3'));
+    expect(io.sent, contains('setoption name MultiPV value 1'));
+    expect(lines, hasLength(3));
+    // Última linha info de cada multipv vence (maior profundidade).
+    expect(lines[0].uci, 'e2e4');
+    expect(lines[0].eval, const CpEval(35));
+    expect(lines[1].uci, 'd2d4');
+    expect(lines[1].eval, const CpEval(20));
+    expect(lines[2].uci, 'g1f3');
+    expect(lines[2].eval, const MateEval(5));
+  });
+
+  test('topMovesFromFen mantém a perspectiva de quem joga (pretas)', () async {
+    final io = FakeEngineIo({
+      'uci': ['uciok'],
+      'isready': ['readyok'],
+      'go depth': [
+        'info depth 12 multipv 1 score cp 25 pv e7e5 g1f3',
+        'bestmove e7e5',
+      ],
+    });
+    final engine = UciEngine(io);
+    await engine.init();
+
+    final lines = await engine.topMovesFromFen(
+      'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+    );
+    // Sem flip: cp 25 é bom para as pretas, que jogam.
+    expect(lines.single.eval, const CpEval(25));
+  });
+
+  test('topMovesFromFen com promoção no pv', () async {
+    final io = FakeEngineIo({
+      'uci': ['uciok'],
+      'isready': ['readyok'],
+      'go depth': [
+        'info depth 12 multipv 1 score cp 900 pv e7e8q d8e8',
+        'bestmove e7e8q',
+      ],
+    });
+    final engine = UciEngine(io);
+    await engine.init();
+    final lines = await engine.topMovesFromFen(
+      '4k3/4P3/8/8/8/8/8/4K3 w - - 0 1',
+    );
+    expect(lines.single.uci, 'e7e8q');
+  });
+
+  test('topMovesFromFen sem linhas retorna lista vazia', () async {
+    final io = FakeEngineIo({
+      'uci': ['uciok'],
+      'isready': ['readyok'],
+      'go depth': ['bestmove (none)'],
+    });
+    final engine = UciEngine(io);
+    await engine.init();
+    final lines = await engine.topMovesFromFen('8/8/8/8/8/8/8/k1K5 b - - 0 1');
+    expect(lines, isEmpty);
+  });
 }
