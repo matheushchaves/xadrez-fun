@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,12 +41,43 @@ class FakeAnalysisEngine implements ChessEngineApi {
   Future<void> dispose() async {}
 }
 
+/// Engine cujo `evaluateFen` sempre falha, simulando o Stockfish caindo.
+class ThrowingAnalysisEngine extends FakeAnalysisEngine {
+  @override
+  Future<EngineEval?> evaluateFen(String fen) async {
+    throw Exception('engine caiu');
+  }
+}
+
+/// Engine cujo `evaluateFen` só responde quando o teste liberar o gate,
+/// permitindo simular análises sobrepostas.
+class GatedAnalysisEngine extends FakeAnalysisEngine {
+  GatedAnalysisEngine({super.bestMove});
+
+  final gates = <Completer<EngineEval?>>[];
+
+  @override
+  Future<EngineEval?> evaluateFen(String fen) {
+    evaluatedFens.add(fen);
+    final gate = Completer<EngineEval?>();
+    gates.add(gate);
+    return gate.future;
+  }
+}
+
 ProviderContainer makeContainer(ChessEngineApi? engine) {
   final container = ProviderContainer(
     overrides: [engineProvider.overrideWith((ref) => Future.value(engine))],
   );
   addTearDown(container.dispose);
   return container;
+}
+
+/// Drena microtasks sem aguardar `idle` (para análises presas em gates).
+Future<void> pump([int times = 5]) async {
+  for (var i = 0; i < times; i++) {
+    await Future<void>.delayed(Duration.zero);
+  }
 }
 
 /// Drena microtasks até a análise corrente terminar.
@@ -129,5 +162,51 @@ void main() {
     expect(state.probabilities!.black, 1.0);
     // Top move na perspectiva de quem joga: M2.
     expect(state.topMoves.single.evalText, 'M2');
+  });
+
+  test('falha do engine durante a análise não derruba o estado', () async {
+    final engine = ThrowingAnalysisEngine();
+    final container = makeContainer(engine);
+
+    container.read(analysisControllerProvider);
+    // Não pode vazar exceção não tratada ao aguardar a análise.
+    await settle(container);
+
+    final state = container.read(analysisControllerProvider);
+    expect(state.analyzing, isFalse);
+    // Controller recém-criado: mantém o estado anterior (vazio).
+    expect(state.eval, isNull);
+    expect(state.topMoves, isEmpty);
+  });
+
+  test('análise obsoleta não apaga o flag analyzing da análise nova', () async {
+    final engine = GatedAnalysisEngine(bestMove: 'e7e5');
+    final container = makeContainer(engine);
+
+    // Primeira análise (posição inicial) fica presa no gate 0.
+    container.read(analysisControllerProvider);
+    await pump();
+    expect(engine.gates, hasLength(1));
+
+    // Lance do jogador + resposta do engine: nova posição, segunda análise
+    // (gate 1) começa enquanto a primeira ainda está pendente.
+    final game = container.read(gameControllerProvider.notifier);
+    await game.playUserMove(Move.parse('e2e4')!);
+    await pump();
+    expect(engine.gates, hasLength(2));
+
+    // A primeira análise termina obsoleta (a FEN mudou): não pode limpar o
+    // flag da análise nova, que continua em andamento.
+    engine.gates[0].complete(const CpEval(10));
+    await pump();
+    expect(container.read(analysisControllerProvider).analyzing, isTrue);
+
+    // A segunda análise termina e publica o resultado.
+    engine.gates[1].complete(const CpEval(42));
+    await settle(container);
+
+    final state = container.read(analysisControllerProvider);
+    expect(state.analyzing, isFalse);
+    expect(state.eval, const CpEval(42));
   });
 }

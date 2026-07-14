@@ -103,8 +103,14 @@ class AnalysisController extends Notifier<AnalysisState> {
         probabilities: winProbabilities(eval),
         topMoves: [for (final line in lines) ?_toTopMove(line, position)],
       );
+    } on Exception {
+      // Falha do engine no meio da análise: mantém o resultado anterior.
     } finally {
-      if (state.analyzing) state = state.copyWith(analyzing: false);
+      // Só limpa o flag se esta ainda é a análise corrente: uma análise
+      // obsoleta não pode apagar o "analisando" de uma mais nova.
+      if (_lastAnalyzedFen == fen && state.analyzing) {
+        state = state.copyWith(analyzing: false);
+      }
     }
   }
 
