@@ -12,8 +12,7 @@ String? findStockfishPath({
   final checkFile = isFile ?? (String p) => File(p).existsSync();
   final home = env['HOME'] ?? '';
 
-  final pathDirs =
-      (env['PATH'] ?? '').split(':').where((d) => d.isNotEmpty);
+  final pathDirs = (env['PATH'] ?? '').split(':').where((d) => d.isNotEmpty);
 
   final candidates = [
     for (final dir in pathDirs) '$dir/stockfish',
