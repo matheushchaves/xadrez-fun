@@ -23,14 +23,15 @@ class FakeEngine implements ChessEngineApi {
   }
 
   @override
+  Future<EngineEval?> evaluateFen(String fen) async => null;
+
+  @override
   Future<void> dispose() async {}
 }
 
 ProviderContainer makeContainer(ChessEngineApi? engine) {
   final container = ProviderContainer(
-    overrides: [
-      engineProvider.overrideWith((ref) => Future.value(engine)),
-    ],
+    overrides: [engineProvider.overrideWith((ref) => Future.value(engine))],
   );
   addTearDown(container.dispose);
   return container;

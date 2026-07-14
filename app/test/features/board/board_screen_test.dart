@@ -16,6 +16,9 @@ class FakeEngine implements ChessEngineApi {
   Future<String?> bestMoveFromFen(String fen) async => 'e7e5';
 
   @override
+  Future<EngineEval?> evaluateFen(String fen) async => null;
+
+  @override
   Future<void> dispose() async {}
 }
 
@@ -40,8 +43,9 @@ void main() {
     expect(find.byType(Chessboard), findsOneWidget);
   });
 
-  testWidgets('painel mostra status e controles de nova partida',
-      (tester) async {
+  testWidgets('painel mostra status e controles de nova partida', (
+    tester,
+  ) async {
     await tester.pumpWidget(makeApp(FakeEngine()));
     await tester.pumpAndSettle();
 
@@ -51,8 +55,9 @@ void main() {
     expect(find.byType(Slider), findsOneWidget);
   });
 
-  testWidgets('nova partida de pretas: engine abre e histórico aparece',
-      (tester) async {
+  testWidgets('nova partida de pretas: engine abre e histórico aparece', (
+    tester,
+  ) async {
     await tester.pumpWidget(makeApp(FakeEngineOpeningE4()));
     await tester.pumpAndSettle();
 
@@ -62,8 +67,9 @@ void main() {
     expect(find.textContaining('e4'), findsWidgets);
   });
 
-  testWidgets('botões de nova partida desabilitam enquanto o engine pensa',
-      (tester) async {
+  testWidgets('botões de nova partida desabilitam enquanto o engine pensa', (
+    tester,
+  ) async {
     await tester.pumpWidget(makeApp(FakeEngineNeverReplies()));
     await tester.pumpAndSettle();
 
@@ -89,6 +95,9 @@ class FakeEngineOpeningE4 implements ChessEngineApi {
   Future<String?> bestMoveFromFen(String fen) async => 'e2e4';
 
   @override
+  Future<EngineEval?> evaluateFen(String fen) async => null;
+
+  @override
   Future<void> dispose() async {}
 }
 
@@ -98,6 +107,9 @@ class FakeEngineNeverReplies implements ChessEngineApi {
 
   @override
   Future<String?> bestMoveFromFen(String fen) => Completer<String?>().future;
+
+  @override
+  Future<EngineEval?> evaluateFen(String fen) async => null;
 
   @override
   Future<void> dispose() async {}
