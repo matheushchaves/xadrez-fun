@@ -10,6 +10,9 @@ abstract interface class EngineIo {
   /// Linhas do stdout do engine (stream broadcast).
   Stream<String> get lines;
 
+  /// Conclui quando o processo do engine termina (crash ou encerramento).
+  Future<void> get onExit;
+
   void send(String command);
 
   Future<void> kill();
@@ -19,6 +22,7 @@ abstract interface class EngineIo {
 class ProcessEngineIo implements EngineIo {
   ProcessEngineIo(Process process)
     : _process = process,
+      onExit = process.exitCode.then((_) {}),
       lines = process.stdout
           .transform(utf8.decoder)
           .transform(const LineSplitter())
@@ -28,6 +32,9 @@ class ProcessEngineIo implements EngineIo {
 
   @override
   final Stream<String> lines;
+
+  @override
+  final Future<void> onExit;
 
   @override
   void send(String command) => _process.stdin.writeln(command);
@@ -48,6 +55,14 @@ class UciEngine implements ChessEngineApi {
   final int depth;
 
   Future<void> _queue = Future.value();
+
+  bool _disposed = false;
+
+  /// True após [dispose] — distingue encerramento intencional de crash.
+  bool get isDisposed => _disposed;
+
+  /// Conclui quando o processo termina (crash ou dispose).
+  Future<void> get onExit => _io.onExit;
 
   static final _scoreRe = RegExp(r'score (cp|mate) (-?\d+)');
   static final _multipvRe = RegExp(r'\bmultipv (\d+)\b');
@@ -77,12 +92,17 @@ class UciEngine implements ChessEngineApi {
 
   @override
   Future<String?> bestMoveFromFen(String fen) => _serialized(() async {
-    _io.send('position fen $fen');
-    _io.send('go depth $depth');
-    final line = await _io.lines.firstWhere((l) => l.startsWith('bestmove'));
-    final parts = line.trim().split(RegExp(r'\s+'));
-    if (parts.length < 2 || parts[1] == '(none)') return null;
-    return parts[1];
+    try {
+      _io.send('position fen $fen');
+      _io.send('go depth $depth');
+      final line = await _io.lines.firstWhere((l) => l.startsWith('bestmove'));
+      final parts = line.trim().split(RegExp(r'\s+'));
+      if (parts.length < 2 || parts[1] == '(none)') return null;
+      return parts[1];
+    } on StateError {
+      // Stream fechado sem bestmove: o processo morreu no meio.
+      return null;
+    }
   });
 
   @override
@@ -134,6 +154,7 @@ class UciEngine implements ChessEngineApi {
 
   @override
   Future<void> dispose() async {
+    _disposed = true;
     _io.send('quit');
     await _io.kill();
   }

@@ -11,10 +11,14 @@ class FakeEngineIo implements EngineIo {
   final Map<String, List<String>> responses;
   final sent = <String>[];
   final _controller = StreamController<String>.broadcast();
+  final _exit = Completer<void>();
   bool killed = false;
 
   @override
   Stream<String> get lines => _controller.stream;
+
+  @override
+  Future<void> get onExit => _exit.future;
 
   @override
   void send(String command) {
@@ -32,6 +36,13 @@ class FakeEngineIo implements EngineIo {
   @override
   Future<void> kill() async {
     killed = true;
+    if (!_exit.isCompleted) _exit.complete();
+    await _controller.close();
+  }
+
+  /// Simula crash do processo: fecha o stdout e sinaliza exit.
+  Future<void> crash() async {
+    if (!_exit.isCompleted) _exit.complete();
     await _controller.close();
   }
 }
@@ -266,5 +277,47 @@ void main() {
     await engine.init();
     final lines = await engine.topMovesFromFen('8/8/8/8/8/8/8/k1K5 b - - 0 1');
     expect(lines, isEmpty);
+  });
+
+  test(
+    'bestMoveFromFen retorna null se o engine morre no meio da consulta',
+    () async {
+      final io = FakeEngineIo({
+        'uci': ['uciok'],
+        'isready': ['readyok'],
+        // sem resposta ao 'go depth': a consulta fica pendente
+      });
+      final engine = UciEngine(io);
+      await engine.init();
+
+      final pending = engine.bestMoveFromFen(
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      );
+      await io.crash();
+
+      expect(await pending, isNull);
+    },
+  );
+
+  test('isDisposed distingue encerramento intencional de crash', () async {
+    final io = standardIo();
+    final engine = UciEngine(io);
+    await engine.init();
+
+    expect(engine.isDisposed, isFalse);
+    await engine.dispose();
+    expect(engine.isDisposed, isTrue);
+  });
+
+  test('onExit conclui quando o processo termina', () async {
+    final io = standardIo();
+    final engine = UciEngine(io);
+    await engine.init();
+
+    var exited = false;
+    unawaited(engine.onExit.then((_) => exited = true));
+    await engine.dispose();
+    await Future<void>.delayed(Duration.zero);
+    expect(exited, isTrue);
   });
 }

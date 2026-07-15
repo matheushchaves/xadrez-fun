@@ -64,7 +64,24 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
   @override
   Widget build(BuildContext context) {
     final engineAvailable = ref.watch(engineProvider).value != null;
-    final engineReady = !ref.watch(engineProvider).isLoading;
+    final status = ref.watch(engineStatusProvider);
+    final (bannerText, bannerIsError) = switch (status) {
+      EngineNotFound() => (
+        'Stockfish não encontrado — instale com: brew install stockfish. '
+            'Tabuleiro livre habilitado.',
+        true,
+      ),
+      EngineFailed(:final message) => (
+        'Stockfish falhou ao iniciar: $message — tabuleiro livre '
+            'habilitado.',
+        true,
+      ),
+      EngineRestarted() => (
+        'Stockfish reiniciado após uma falha. A partida continua.',
+        false,
+      ),
+      EngineSearching() || EngineReady() => (null, false),
+    };
 
     ref.listen(gameControllerProvider, (previous, next) {
       _boardController.updatePosition(_gameData(next, engineAvailable));
@@ -78,15 +95,14 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
     return Scaffold(
       body: Column(
         children: [
-          if (engineReady && !engineAvailable)
+          if (bannerText != null)
             Container(
               width: double.infinity,
-              color: Theme.of(context).colorScheme.errorContainer,
+              color: bannerIsError
+                  ? Theme.of(context).colorScheme.errorContainer
+                  : Theme.of(context).colorScheme.tertiaryContainer,
               padding: const EdgeInsets.all(12),
-              child: const Text(
-                'Stockfish não encontrado — instale com: brew install stockfish. '
-                'Tabuleiro livre habilitado.',
-              ),
+              child: Text(bannerText),
             ),
           Expanded(
             child: Row(

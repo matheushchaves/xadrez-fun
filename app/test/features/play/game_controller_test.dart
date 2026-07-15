@@ -41,6 +41,18 @@ ProviderContainer makeContainer(ChessEngineApi? engine) {
   return container;
 }
 
+/// Permite trocar o engine em tempo de teste (simula reinício pós-crash).
+final _engineHolderProvider = NotifierProvider<_EngineHolder, ChessEngineApi?>(
+  _EngineHolder.new,
+);
+
+class _EngineHolder extends Notifier<ChessEngineApi?> {
+  @override
+  ChessEngineApi? build() => null;
+
+  void set(ChessEngineApi? engine) => state = engine;
+}
+
 void main() {
   test('estado inicial: posição inicial, sem histórico', () {
     final container = makeContainer(FakeEngine('e7e5'));
@@ -115,4 +127,37 @@ void main() {
     expect(state.isGameOver, isTrue);
     expect(state.resultText, 'Xeque-mate! Pretas vencem.');
   });
+
+  test(
+    'engine trocado (reinício) recebe o skill level da partida em curso',
+    () async {
+      final engineA = FakeEngine('e7e5');
+      final engineB = FakeEngine('e7e5');
+      final container = ProviderContainer(
+        overrides: [
+          engineProvider.overrideWith(
+            (ref) async => ref.watch(_engineHolderProvider),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.read(_engineHolderProvider.notifier).set(engineA);
+
+      final controller = container.read(gameControllerProvider.notifier);
+      await controller.newGame(playerSide: Side.white, skillLevel: 7);
+
+      // Simula o reinício: o manager publica um engine novo. `container.pump()`
+      // aguarda o agendador do Riverpod processar rebuilds/notificações
+      // pendentes; o `read` força o flush do provider marcado como "sujo" a
+      // cada rodada, até a cadeia (holder -> engineProvider -> ref.listen do
+      // GameController) assentar por completo.
+      container.read(_engineHolderProvider.notifier).set(engineB);
+      for (var i = 0; i < 5; i++) {
+        container.read(engineProvider);
+        await container.pump();
+      }
+
+      expect(engineB.skillLevels, contains(7));
+    },
+  );
 }

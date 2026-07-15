@@ -26,9 +26,15 @@ class FakeEngine implements ChessEngineApi {
   Future<void> dispose() async {}
 }
 
-Widget makeApp(ChessEngineApi? engine) {
+Widget makeApp(ChessEngineApi? engine, {EngineStatus? status}) {
   return ProviderScope(
-    overrides: [engineProvider.overrideWith((ref) => Future.value(engine))],
+    overrides: [
+      engineProvider.overrideWith((ref) => Future.value(engine)),
+      engineStatusProvider.overrideWithValue(
+        status ??
+            (engine == null ? const EngineNotFound() : const EngineReady()),
+      ),
+    ],
     child: const MaterialApp(home: BoardScreen()),
   );
 }
@@ -88,6 +94,26 @@ void main() {
       find.widgetWithText(FilledButton, 'Jogar de brancas'),
     );
     expect(whiteButton.onPressed, isNull);
+  });
+
+  testWidgets('falha de spawn mostra mensagem específica', (tester) async {
+    await tester.pumpWidget(
+      makeApp(null, status: const EngineFailed('ProcessException: boom')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Stockfish falhou ao iniciar'), findsOneWidget);
+    expect(find.textContaining('brew install stockfish'), findsNothing);
+  });
+
+  testWidgets('engine reiniciado mostra aviso e mantém o jogo', (tester) async {
+    await tester.pumpWidget(
+      makeApp(FakeEngine(), status: const EngineRestarted(1)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Stockfish reiniciado'), findsOneWidget);
+    expect(find.byType(Chessboard), findsOneWidget);
   });
 }
 

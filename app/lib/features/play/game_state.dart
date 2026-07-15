@@ -14,12 +14,12 @@ class GameState {
   });
 
   const GameState.initial()
-      : this(
-          position: Chess.initial,
-          sanHistory: const [],
-          playerSide: Side.white,
-          skillLevel: 10,
-        );
+    : this(
+        position: Chess.initial,
+        sanHistory: const [],
+        playerSide: Side.white,
+        skillLevel: 10,
+      );
 
   final Position position;
   final List<String> sanHistory;

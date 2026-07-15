@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,20 +8,33 @@ import 'game_state.dart';
 
 export 'game_state.dart';
 
-final gameControllerProvider =
-    NotifierProvider<GameController, GameState>(GameController.new);
+final gameControllerProvider = NotifierProvider<GameController, GameState>(
+  GameController.new,
+);
 
 /// Orquestra a partida: aplica lances do jogador e pede resposta ao engine.
 class GameController extends Notifier<GameState> {
   @override
-  GameState build() => GameState.initial();
+  GameState build() {
+    ref.listen(engineProvider, (previous, next) {
+      final engine = next.value;
+      if (engine != null && !identical(previous?.value, engine)) {
+        // Engine novo (primeiro spawn ou reinício pós-crash): reaplica o
+        // nível de habilidade da partida em curso.
+        unawaited(engine.setSkillLevel(state.skillLevel));
+      }
+    });
+    return GameState.initial();
+  }
 
   Future<void> newGame({
     required Side playerSide,
     required int skillLevel,
   }) async {
-    state = GameState.initial()
-        .copyWith(playerSide: playerSide, skillLevel: skillLevel);
+    state = GameState.initial().copyWith(
+      playerSide: playerSide,
+      skillLevel: skillLevel,
+    );
     final engine = await ref.read(engineProvider.future);
     await engine?.setSkillLevel(skillLevel);
     if (playerSide == Side.black) {
