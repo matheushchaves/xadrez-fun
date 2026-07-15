@@ -88,12 +88,14 @@ class AnalysisController extends Notifier<AnalysisState> {
       return;
     }
     state = state.copyWith(analyzing: true);
+    var failed = false;
     try {
       final eval = await engine.evaluateFen(fen);
       final lines = await engine.topMovesFromFen(fen, count: 3);
       // Descarta resultado obsoleto: a posição mudou durante a análise.
       if (ref.read(gameControllerProvider).position.fen != fen) return;
       if (eval == null) {
+        failed = true;
         state = const AnalysisState();
         return;
       }
@@ -105,11 +107,21 @@ class AnalysisController extends Notifier<AnalysisState> {
       );
     } on Exception {
       // Falha do engine no meio da análise: mantém o resultado anterior.
+      failed = true;
     } finally {
-      // Só limpa o flag se esta ainda é a análise corrente: uma análise
-      // obsoleta não pode apagar o "analisando" de uma mais nova.
-      if (_lastAnalyzedFen == fen && state.analyzing) {
-        state = state.copyWith(analyzing: false);
+      // Só age se esta ainda é a análise corrente: uma análise obsoleta não
+      // pode apagar o "analisando" nem destravar o retry de uma mais nova.
+      if (_lastAnalyzedFen == fen) {
+        if (state.analyzing) {
+          state = state.copyWith(analyzing: false);
+        }
+        if (failed) {
+          // Libera o retry desta mesma posição: sem isso, um engine que se
+          // recupera (reinício automático pós-crash) nunca reanalisaria a
+          // posição corrente, deixando o painel preso em "Aguardando
+          // análise…" até o jogador mover.
+          _lastAnalyzedFen = null;
+        }
       }
     }
   }

@@ -73,6 +73,31 @@ ProviderContainer makeContainer(ChessEngineApi? engine) {
   return container;
 }
 
+/// Permite trocar o engine em tempo de teste (simula reinício pós-crash),
+/// mesmo padrão do `_engineHolderProvider` de `game_controller_test.dart`.
+final _engineHolderProvider = NotifierProvider<_EngineHolder, ChessEngineApi?>(
+  _EngineHolder.new,
+);
+
+class _EngineHolder extends Notifier<ChessEngineApi?> {
+  @override
+  ChessEngineApi? build() => null;
+
+  void set(ChessEngineApi? engine) => state = engine;
+}
+
+ProviderContainer makeSwappableContainer() {
+  final container = ProviderContainer(
+    overrides: [
+      engineProvider.overrideWith(
+        (ref) async => ref.watch(_engineHolderProvider),
+      ),
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
 /// Drena microtasks sem aguardar `idle` (para análises presas em gates).
 Future<void> pump([int times = 5]) async {
   for (var i = 0; i < times; i++) {
@@ -209,4 +234,35 @@ void main() {
     expect(state.analyzing, isFalse);
     expect(state.eval, const CpEval(42));
   });
+
+  test(
+    'engine se recupera (reinício pós-crash): reanalisa a posição corrente',
+    () async {
+      // eval nulo simula o processo morrendo no meio da consulta: o stream
+      // fecha e `evaluateFen` retorna null sem lançar exceção (ver
+      // uci_engine.dart).
+      final engineA = FakeAnalysisEngine(eval: null);
+      final engineB = FakeAnalysisEngine();
+      final container = makeSwappableContainer();
+      container.read(_engineHolderProvider.notifier).set(engineA);
+
+      container.read(analysisControllerProvider);
+      await settle(container);
+
+      // A primeira tentativa falhou: sem resultado nenhum.
+      expect(container.read(analysisControllerProvider).eval, isNull);
+
+      // Simula o EngineManager republicando um engine novo após o reinício.
+      container.read(_engineHolderProvider.notifier).set(engineB);
+      await settle(container);
+
+      final fen = container.read(gameControllerProvider).position.fen;
+      // Sem o reset de _lastAnalyzedFen no failure path, este evento seria
+      // ignorado (mesma FEN já "analisada") e o painel ficaria preso em
+      // "Aguardando análise…" até o jogador mover.
+      expect(engineB.evaluatedFens, [fen]);
+      expect(container.read(analysisControllerProvider).eval, const CpEval(31));
+      expect(container.read(analysisControllerProvider).analyzing, isFalse);
+    },
+  );
 }
