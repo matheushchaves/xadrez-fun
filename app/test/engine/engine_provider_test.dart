@@ -163,4 +163,26 @@ void main() {
     expect(status, isA<EngineFailed>());
     expect(spawnCalls, 1 + kMaxEngineRestarts);
   });
+
+  test('dispose do container encerra só o engine atual após um respawn, '
+      'não os que já crasharam', () async {
+    final container = makeContainer();
+    await container.read(engineManagerProvider.future);
+
+    // Provoca um respawn: agora há dois engines (o antigo já morto).
+    await ios.first.crash();
+    await drainMicrotasks();
+    expect(spawnCalls, 2);
+    final staleSentBeforeDispose = List<String>.of(ios.first.sent);
+
+    container.dispose();
+
+    // O engine antigo (já encerrado pelo crash) não recebe nenhum comando
+    // extra — em particular, não um 'quit' redundante escrito num
+    // processo já morto.
+    expect(ios.first.sent, staleSentBeforeDispose);
+    // O engine atual (segundo spawn) é o único encerrado pelo dispose.
+    expect(ios[1].sent, contains('quit'));
+    expect(ios[1].killed, isTrue);
+  });
 }

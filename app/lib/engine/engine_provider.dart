@@ -80,8 +80,18 @@ final engineManagerProvider =
 class EngineManager extends AsyncNotifier<EngineSession> {
   int _restarts = 0;
 
+  /// O engine mais recente já spawnado (ou null se nenhum spawn teve
+  /// sucesso ainda). Usado só pelo callback de dispose — ver [build].
+  UciEngine? _currentEngine;
+
   @override
   Future<EngineSession> build() async {
+    // Registrado uma única vez por toda a vida do notifier: no dispose,
+    // encerra o engine ATUAL (não cada engine que já existiu). Não pode ler
+    // `state` aqui dentro — o Riverpod proíbe usar o Ref/notifier a partir
+    // de um callback de ciclo de vida — por isso guardamos a referência em
+    // um campo simples, atualizado em [_spawn].
+    ref.onDispose(() => _currentEngine?.dispose());
     final path = ref.watch(stockfishPathProvider)();
     if (path == null) {
       return const EngineSession(status: EngineNotFound());
@@ -99,7 +109,7 @@ class EngineManager extends AsyncNotifier<EngineSession> {
     } on Exception catch (error) {
       return EngineSession(status: EngineFailed('$error'));
     }
-    ref.onDispose(engine.dispose);
+    _currentEngine = engine;
     unawaited(engine.onExit.then((_) => _onEngineExit(engine, path)));
     return EngineSession(engine: engine, status: statusOnSuccess);
   }
