@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../analysis/analysis_panel.dart';
 import '../play/game_controller.dart';
+import '../strategy/strategy_panel.dart';
 
-/// Painel lateral: status da partida, nível do engine, nova partida
-/// e histórico de lances.
+/// Painel lateral: status da partida, nível do engine, nova partida e
+/// histórico de lances (fixos), com abas de Análise/Estratégia abaixo.
 class GameControls extends ConsumerStatefulWidget {
   const GameControls({super.key});
 
@@ -14,8 +15,22 @@ class GameControls extends ConsumerStatefulWidget {
   ConsumerState<GameControls> createState() => _GameControlsState();
 }
 
-class _GameControlsState extends ConsumerState<GameControls> {
+class _GameControlsState extends ConsumerState<GameControls>
+    with SingleTickerProviderStateMixin {
   double _skill = 10;
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   String _statusText(GameState state) {
     final result = state.resultText;
@@ -71,12 +86,11 @@ class _GameControlsState extends ConsumerState<GameControls> {
                     ),
               child: const Text('Jogar de pretas'),
             ),
-            const SizedBox(height: 24),
-            const AnalysisPanel(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text('Lances', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
-            Expanded(
+            SizedBox(
+              height: 72,
               child: SingleChildScrollView(
                 child: Wrap(
                   spacing: 8,
@@ -90,6 +104,23 @@ class _GameControlsState extends ConsumerState<GameControls> {
                       ),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Análise'),
+                Tab(text: 'Estratégia'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: const [
+                  SingleChildScrollView(child: AnalysisPanel()),
+                  StrategyPanel(),
+                ],
               ),
             ),
           ],
