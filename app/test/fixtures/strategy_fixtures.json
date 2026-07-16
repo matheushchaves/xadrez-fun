@@ -1313,5 +1313,399 @@
         "Trazer dama cedo demais"
       ]
     }
+  },
+  "middlegame_center_battle": {
+    "fen": "r1q1r1k1/p2n1ppp/2p1pn2/8/2BPP3/2N2N2/P4PPP/R1BQR1K1 w - - 2 13",
+    "threat": {
+      "white_threats": [],
+      "black_threats": []
+    },
+    "weakness": {
+      "white": [
+        "Peão isolado na coluna a"
+      ],
+      "black": [
+        "Peão isolado na coluna a",
+        "Peão isolado na coluna c"
+      ]
+    },
+    "pawns": {
+      "white": {
+        "count": 6,
+        "islands": 2,
+        "passed": [],
+        "doubled": [],
+        "isolated": [
+          "a"
+        ]
+      },
+      "black": {
+        "count": 6,
+        "islands": 3,
+        "passed": [],
+        "doubled": [],
+        "isolated": [
+          "a",
+          "c"
+        ]
+      }
+    },
+    "center": {
+      "white_score": 10.5,
+      "black_score": 2.5,
+      "white_attacks": 9,
+      "black_attacks": 5,
+      "white_pieces": [
+        "Peão em e4",
+        "Peão em d4"
+      ],
+      "black_pieces": [],
+      "dominant": "white"
+    },
+    "king": {
+      "white": {
+        "square": "g1",
+        "positives": [
+          "Rocado",
+          "Bom escudo de peões (3 peões)"
+        ],
+        "issues": [],
+        "safety_score": 4,
+        "safe": true
+      },
+      "black": {
+        "square": "g8",
+        "positives": [
+          "Rocado",
+          "Bom escudo de peões (3 peões)"
+        ],
+        "issues": [],
+        "safety_score": 4,
+        "safe": true
+      }
+    },
+    "pieces": {
+      "white": [
+        {
+          "piece": "Torre",
+          "symbol": "♖",
+          "square": "a1",
+          "mobility": 1,
+          "status": [],
+          "issues": [
+            "coluna fechada",
+            "pouca mobilidade"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Bispo",
+          "symbol": "♗",
+          "square": "c1",
+          "mobility": 7,
+          "status": [
+            "bispo bom"
+          ],
+          "issues": [],
+          "active": true
+        },
+        {
+          "piece": "Dama",
+          "symbol": "♕",
+          "square": "d1",
+          "mobility": 6,
+          "status": [],
+          "issues": [],
+          "active": true
+        },
+        {
+          "piece": "Torre",
+          "symbol": "♖",
+          "square": "e1",
+          "mobility": 3,
+          "status": [],
+          "issues": [
+            "coluna fechada"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Rei",
+          "symbol": "♔",
+          "square": "g1",
+          "mobility": 2,
+          "status": [],
+          "issues": [
+            "pouca mobilidade"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Cavalo",
+          "symbol": "♘",
+          "square": "c3",
+          "mobility": 5,
+          "status": [
+            "bem centralizado"
+          ],
+          "issues": [],
+          "active": true
+        },
+        {
+          "piece": "Cavalo",
+          "symbol": "♘",
+          "square": "f3",
+          "mobility": 4,
+          "status": [
+            "bem centralizado"
+          ],
+          "issues": [],
+          "active": true
+        },
+        {
+          "piece": "Bispo",
+          "symbol": "♗",
+          "square": "c4",
+          "mobility": 8,
+          "status": [
+            "bispo bom",
+            "boa mobilidade"
+          ],
+          "issues": [],
+          "active": true
+        }
+      ],
+      "black": [
+        {
+          "piece": "Cavalo",
+          "symbol": "♞",
+          "square": "f6",
+          "mobility": 0,
+          "status": [
+            "bem centralizado"
+          ],
+          "issues": [
+            "sem movimentos!"
+          ],
+          "active": true
+        },
+        {
+          "piece": "Cavalo",
+          "symbol": "♞",
+          "square": "d7",
+          "mobility": 0,
+          "status": [],
+          "issues": [
+            "sem movimentos!"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Torre",
+          "symbol": "♜",
+          "square": "a8",
+          "mobility": 0,
+          "status": [],
+          "issues": [
+            "coluna fechada",
+            "sem movimentos!"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Dama",
+          "symbol": "♛",
+          "square": "c8",
+          "mobility": 0,
+          "status": [],
+          "issues": [
+            "restrita",
+            "sem movimentos!"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Torre",
+          "symbol": "♜",
+          "square": "e8",
+          "mobility": 0,
+          "status": [],
+          "issues": [
+            "coluna fechada",
+            "sem movimentos!"
+          ],
+          "active": false
+        },
+        {
+          "piece": "Rei",
+          "symbol": "♚",
+          "square": "g8",
+          "mobility": 0,
+          "status": [],
+          "issues": [
+            "sem movimentos!"
+          ],
+          "active": false
+        }
+      ]
+    },
+    "tactics": {
+      "white": [],
+      "black": []
+    },
+    "plan": {
+      "phase": "Meio-jogo",
+      "characteristics": [
+        "Brancas controlam centro",
+        "Coluna b aberta",
+        "Brancas têm par de bispos"
+      ],
+      "plans": [
+        "Expandir no flanco onde você tem vantagem espacial",
+        "Ocupar coluna aberta com torre(s)",
+        "Abrir posição para maximizar bispos",
+        "Buscar trocar peças ruins por peças boas do adversário"
+      ],
+      "avoid": [
+        "Fechar a posição",
+        "Trocas que ajudem o adversário"
+      ]
+    }
+  },
+  "true_endgame": {
+    "fen": "r5k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 35",
+    "threat": {
+      "white_threats": [
+        "Torre em a8 não defendido!",
+        "Ameaça de MATE com Rxa8#!"
+      ],
+      "black_threats": [
+        "Torre em a1 não defendido!"
+      ]
+    },
+    "weakness": {
+      "white": [],
+      "black": []
+    },
+    "pawns": {
+      "white": {
+        "count": 3,
+        "islands": 1,
+        "passed": [],
+        "doubled": [],
+        "isolated": []
+      },
+      "black": {
+        "count": 3,
+        "islands": 1,
+        "passed": [],
+        "doubled": [],
+        "isolated": []
+      }
+    },
+    "center": {
+      "white_score": 0.0,
+      "black_score": 0.0,
+      "white_attacks": 0,
+      "black_attacks": 0,
+      "white_pieces": [],
+      "black_pieces": [],
+      "dominant": "equal"
+    },
+    "king": {
+      "white": {
+        "square": "g1",
+        "positives": [
+          "Rocado",
+          "Bom escudo de peões (3 peões)"
+        ],
+        "issues": [],
+        "safety_score": 4,
+        "safe": true
+      },
+      "black": {
+        "square": "g8",
+        "positives": [
+          "Rocado",
+          "Bom escudo de peões (3 peões)"
+        ],
+        "issues": [],
+        "safety_score": 4,
+        "safe": true
+      }
+    },
+    "pieces": {
+      "white": [
+        {
+          "piece": "Torre",
+          "symbol": "♖",
+          "square": "a1",
+          "mobility": 12,
+          "status": [
+            "coluna aberta!",
+            "boa mobilidade"
+          ],
+          "issues": [],
+          "active": true
+        },
+        {
+          "piece": "Rei",
+          "symbol": "♔",
+          "square": "g1",
+          "mobility": 2,
+          "status": [],
+          "issues": [
+            "pouca mobilidade"
+          ],
+          "active": false
+        }
+      ],
+      "black": [
+        {
+          "piece": "Torre",
+          "symbol": "♜",
+          "square": "a8",
+          "mobility": 0,
+          "status": [
+            "coluna aberta!"
+          ],
+          "issues": [
+            "sem movimentos!"
+          ],
+          "active": true
+        },
+        {
+          "piece": "Rei",
+          "symbol": "♚",
+          "square": "g8",
+          "mobility": 0,
+          "status": [],
+          "issues": [
+            "sem movimentos!"
+          ],
+          "active": false
+        }
+      ]
+    },
+    "tactics": {
+      "white": [
+        "💨 DESCOBERTA: Mover Torre dá xeque descoberto!"
+      ],
+      "black": []
+    },
+    "plan": {
+      "phase": "Final",
+      "characteristics": [
+        "Coluna a aberta"
+      ],
+      "plans": [
+        "Ativar o rei (rei é peça forte no final)",
+        "Criar peão passado",
+        "Centralizar torres atrás de peões passados"
+      ],
+      "avoid": [
+        "Passividade - rei deve estar ativo"
+      ]
+    }
   }
 }

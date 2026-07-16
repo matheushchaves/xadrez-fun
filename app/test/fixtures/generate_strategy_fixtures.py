@@ -40,6 +40,16 @@ FENS = {
     "endgame_passed_pawn": "8/8/8/3k4/3P4/3K4/8/8 w - - 0 1",
     "unprotected_piece": "4k3/8/8/3n4/8/2B5/8/4K3 w - - 0 1",
     "no_pawns": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+    # Meio-jogo (fullmove > 10, damas em jogo): brancas dominam o centro com
+    # peões em d4/e4, têm par de bispos e a coluna b está aberta — exercita
+    # os três ramos condicionais de PlanSuggester._generate_plans/
+    # _what_to_avoid para "Meio-jogo" e a truncagem da lista de planos em 4.
+    "middlegame_center_battle": (
+        "r1q1r1k1/p2n1ppp/2p1pn2/8/2BPP3/2N2N2/P4PPP/R1BQR1K1 w - - 2 13"
+    ),
+    # Final genuíno (queens == 0, fullmove > 10): apenas rei, torre e peões
+    # de cada lado — exercita o ramo "Final" de PlanSuggester.
+    "true_endgame": "r5k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 35",
 }
 
 threat = ThreatAnalyzer()

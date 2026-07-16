@@ -12,7 +12,7 @@ void main() {
     );
   });
 
-  test('todos os 8 casos curados estão presentes', () {
+  test('todos os 10 casos curados estão presentes', () {
     final fixtures = loadStrategyFixtures();
     expect(fixtures.keys.toSet(), {
       'start',
@@ -23,6 +23,8 @@ void main() {
       'endgame_passed_pawn',
       'unprotected_piece',
       'no_pawns',
+      'middlegame_center_battle',
+      'true_endgame',
     });
   });
 }
