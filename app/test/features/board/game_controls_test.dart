@@ -28,8 +28,12 @@ Widget _makeControls() {
     overrides: [
       engineProvider.overrideWith((ref) => Future.value(FakeEngine())),
     ],
-    child: const MaterialApp(
-      home: Scaffold(body: SizedBox(height: 800, child: GameControls())),
+    child: MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: SizedBox(height: 1000, child: GameControls()),
+        ),
+      ),
     ),
   );
 }
@@ -71,5 +75,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Vez das brancas.'), findsOneWidget);
+  });
+
+  testWidgets('Desfazer e Virar tabuleiro só aparecem em Modo Análise', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_makeControls());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Desfazer'), findsNothing);
+    expect(find.text('Virar tabuleiro'), findsNothing);
+
+    await tester.tap(find.text('Modo Análise'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Desfazer'), findsOneWidget);
+    expect(find.text('Virar tabuleiro'), findsOneWidget);
+
+    final undoButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Desfazer'),
+    );
+    expect(undoButton.onPressed, isNull);
   });
 }

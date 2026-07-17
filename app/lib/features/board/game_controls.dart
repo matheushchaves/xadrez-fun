@@ -98,6 +98,28 @@ class _GameControlsState extends ConsumerState<GameControls>
                   : () => controller.startAnalysisMode(),
               child: const Text('Modo Análise'),
             ),
+            if (state.mode == GameMode.analysis) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: state.sanHistory.isEmpty
+                          ? null
+                          : controller.undoMove,
+                      child: const Text('Desfazer'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: controller.flipBoard,
+                      child: const Text('Virar tabuleiro'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             Text('Lances', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
