@@ -80,6 +80,8 @@ class GameController extends Notifier<GameState> {
       skillLevel: state.skillLevel,
       mode: state.mode,
       orientation: state.orientation,
+      gameId: state.gameId,
+      gameName: state.gameName,
       lastMove: lastMove,
       engineThinking: state.engineThinking,
     );

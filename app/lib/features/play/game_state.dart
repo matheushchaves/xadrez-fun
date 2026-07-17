@@ -15,19 +15,27 @@ class GameState {
     required this.skillLevel,
     required this.mode,
     required this.orientation,
+    required this.gameId,
+    required this.gameName,
     this.lastMove,
     this.engineThinking = false,
   });
 
-  const GameState.initial()
-    : this(
-        position: Chess.initial,
-        sanHistory: const [],
-        playerSide: Side.white,
-        skillLevel: 10,
-        mode: GameMode.playVsEngine,
-        orientation: Side.white,
-      );
+  /// Partida nova: identidade (`gameId`/`gameName`) gerada na hora — por
+  /// isso não é mais `const` como antes de existir identidade de partida.
+  factory GameState.initial() {
+    final now = DateTime.now();
+    return GameState(
+      position: Chess.initial,
+      sanHistory: const [],
+      playerSide: Side.white,
+      skillLevel: 10,
+      mode: GameMode.playVsEngine,
+      orientation: Side.white,
+      gameId: _newGameId(now),
+      gameName: _defaultGameName(now),
+    );
+  }
 
   final Position position;
   final List<String> sanHistory;
@@ -40,6 +48,16 @@ class GameState {
   /// `GameController.flipBoard()`. Também usado pelo painel Estratégia para
   /// decidir a perspectiva "seu/adversário".
   final Side orientation;
+
+  /// Identificador único da partida — gerado uma vez em [GameState.initial]
+  /// (ou recebido de uma partida carregada) e preservado por toda a sessão
+  /// (lances, undo, flip). Só muda quando uma partida nova começa ou uma
+  /// partida salva é carregada via `GameController.loadGame`.
+  final String gameId;
+
+  /// Nome de exibição da partida (padrão automático, renomeável via
+  /// `GameController.renameCurrentGame`).
+  final String gameName;
   final Move? lastMove;
   final bool engineThinking;
 
@@ -67,6 +85,7 @@ class GameState {
     int? skillLevel,
     GameMode? mode,
     Side? orientation,
+    String? gameName,
     Move? lastMove,
     bool? engineThinking,
   }) {
@@ -77,8 +96,22 @@ class GameState {
       skillLevel: skillLevel ?? this.skillLevel,
       mode: mode ?? this.mode,
       orientation: orientation ?? this.orientation,
+      gameId: gameId,
+      gameName: gameName ?? this.gameName,
       lastMove: lastMove ?? this.lastMove,
       engineThinking: engineThinking ?? this.engineThinking,
     );
   }
+}
+
+String _newGameId(DateTime now) {
+  final salt = Object().hashCode.abs();
+  return '${now.microsecondsSinceEpoch.toRadixString(36)}'
+      '${salt.toRadixString(36)}';
+}
+
+String _defaultGameName(DateTime now) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return 'Partida ${two(now.day)}/${two(now.month)} '
+      '${two(now.hour)}:${two(now.minute)}';
 }

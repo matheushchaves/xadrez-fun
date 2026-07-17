@@ -69,6 +69,19 @@ void main() {
     expect(state.orientation, Side.white);
   });
 
+  test('estado inicial tem gameId e gameName preenchidos automaticamente', () {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final state = container.read(gameControllerProvider);
+    expect(state.gameId, isNotEmpty);
+    expect(state.gameName, isNotEmpty);
+  });
+
+  test('GameState.initial() gera gameId diferente a cada chamada', () {
+    final a = GameState.initial();
+    final b = GameState.initial();
+    expect(a.gameId, isNot(equals(b.gameId)));
+  });
+
   test('lance do jogador dispara resposta do engine', () async {
     final engine = FakeEngine('e7e5');
     final container = makeContainer(engine);
@@ -213,6 +226,20 @@ void main() {
     controller.undoMove();
 
     expect(container.read(gameControllerProvider), same(before));
+  });
+
+  test('undoMove preserva gameId e gameName', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+    final before = container.read(gameControllerProvider);
+    await controller.playUserMove(Move.parse('e2e4')!);
+
+    controller.undoMove();
+
+    final after = container.read(gameControllerProvider);
+    expect(after.gameId, before.gameId);
+    expect(after.gameName, before.gameName);
   });
 
   test('flipBoard alterna a orientação', () {
