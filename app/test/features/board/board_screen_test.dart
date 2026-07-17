@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:chessground/chessground.dart';
+import 'package:dartchess/dartchess.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xadrez_fun/engine/engine_api.dart';
 import 'package:xadrez_fun/engine/engine_provider.dart';
 import 'package:xadrez_fun/features/board/board_screen.dart';
+import 'package:xadrez_fun/features/play/game_controller.dart';
 
 class FakeEngine implements ChessEngineApi {
   @override
@@ -115,6 +117,42 @@ void main() {
     expect(find.textContaining('Stockfish reiniciado'), findsOneWidget);
     expect(find.byType(Chessboard), findsOneWidget);
   });
+
+  testWidgets('Modo Análise: tabuleiro fica livre para as duas cores', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp(FakeEngine()));
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(BoardScreen));
+    ProviderScope.containerOf(context, listen: false)
+        .read(gameControllerProvider.notifier)
+        .startAnalysisMode();
+    await tester.pumpAndSettle();
+
+    final chessboard = tester.widget<Chessboard>(find.byType(Chessboard));
+    expect(chessboard.controller.game.playerSide, PlayerSide.both);
+  });
+
+  testWidgets(
+    'Modo Análise: virar tabuleiro muda a orientação do Chessboard',
+    (tester) async {
+      await tester.pumpWidget(makeApp(FakeEngine()));
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(BoardScreen));
+      final controller = ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(gameControllerProvider.notifier);
+      controller.startAnalysisMode();
+      controller.flipBoard();
+      await tester.pumpAndSettle();
+
+      final chessboard = tester.widget<Chessboard>(find.byType(Chessboard));
+      expect(chessboard.orientation, Side.black);
+    },
+  );
 }
 
 class FakeEngineOpeningE4 implements ChessEngineApi {

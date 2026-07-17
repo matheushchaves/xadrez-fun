@@ -38,7 +38,7 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
     final PlayerSide playerSide;
     if (state.isGameOver || state.engineThinking) {
       playerSide = PlayerSide.none;
-    } else if (!engineAvailable) {
+    } else if (state.mode == GameMode.analysis || !engineAvailable) {
       playerSide = PlayerSide.both;
     } else {
       playerSide = state.playerSide == Side.white
@@ -88,9 +88,7 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
     });
 
     final state = ref.watch(gameControllerProvider);
-    final orientation = state.playerSide == Side.black
-        ? Side.black
-        : Side.white;
+    final orientation = state.orientation;
 
     return Scaffold(
       body: Column(
