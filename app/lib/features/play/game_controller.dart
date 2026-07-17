@@ -34,12 +34,24 @@ class GameController extends Notifier<GameState> {
     state = GameState.initial().copyWith(
       playerSide: playerSide,
       skillLevel: skillLevel,
+      mode: GameMode.playVsEngine,
+      orientation: playerSide,
     );
     final engine = await ref.read(engineProvider.future);
     await engine?.setSkillLevel(skillLevel);
     if (playerSide == Side.black) {
       await _engineMove();
     }
+  }
+
+  /// Inicia uma partida em Modo Análise: o usuário move as duas cores
+  /// livremente, sem resposta automática do engine. O engine continua
+  /// disponível para avaliação (`AnalysisController`), só não joga sozinho.
+  void startAnalysisMode() {
+    state = GameState.initial().copyWith(
+      mode: GameMode.analysis,
+      orientation: Side.white,
+    );
   }
 
   Future<void> playUserMove(Move move) async {

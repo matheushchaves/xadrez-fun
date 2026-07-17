@@ -120,6 +120,35 @@ void main() {
     expect(state.position.turn, Side.black);
   });
 
+  test('newGame define a orientação igual ao playerSide', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+
+    await controller.newGame(playerSide: Side.black, skillLevel: 5);
+
+    final state = container.read(gameControllerProvider);
+    expect(state.orientation, Side.black);
+    expect(state.mode, GameMode.playVsEngine);
+  });
+
+  test(
+    'startAnalysisMode reinicia em Modo Análise, orientação brancas',
+    () async {
+      final engine = FakeEngine('e7e5');
+      final container = makeContainer(engine);
+      final controller = container.read(gameControllerProvider.notifier);
+
+      await controller.playUserMove(Move.parse('e2e4')!);
+      controller.startAnalysisMode();
+
+      final state = container.read(gameControllerProvider);
+      expect(state.mode, GameMode.analysis);
+      expect(state.orientation, Side.white);
+      expect(state.sanHistory, isEmpty);
+      expect(state.position.fen, Chess.initial.fen);
+    },
+  );
+
   test('detecta xeque-mate ao final da sequência de lances', () async {
     // Mate do louco: 1.f3 e5 2.g4 Dh4# — tabuleiro livre (sem engine),
     // todos os lances entram como lances do "jogador".
