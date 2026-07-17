@@ -164,6 +164,57 @@ void main() {
     expect(engine.fensAsked, isEmpty);
   });
 
+  test('undoMove desfaz o último lance em Modo Análise', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+    await controller.playUserMove(Move.parse('e2e4')!);
+    await controller.playUserMove(Move.parse('e7e5')!);
+
+    controller.undoMove();
+
+    final state = container.read(gameControllerProvider);
+    expect(state.sanHistory, ['e4']);
+    expect(state.position.turn, Side.black);
+    expect(state.lastMove, Move.parse('e2e4'));
+  });
+
+  test('undoMove até esvaziar o histórico zera lastMove', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+    await controller.playUserMove(Move.parse('e2e4')!);
+
+    controller.undoMove();
+
+    final state = container.read(gameControllerProvider);
+    expect(state.sanHistory, isEmpty);
+    expect(state.position.fen, Chess.initial.fen);
+    expect(state.lastMove, isNull);
+  });
+
+  test('undoMove não faz nada fora do Modo Análise', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    await controller.playUserMove(Move.parse('e2e4')!);
+    final before = container.read(gameControllerProvider);
+
+    controller.undoMove();
+
+    expect(container.read(gameControllerProvider), same(before));
+  });
+
+  test('undoMove com histórico vazio não faz nada', () {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+    final before = container.read(gameControllerProvider);
+
+    controller.undoMove();
+
+    expect(container.read(gameControllerProvider), same(before));
+  });
+
   test('detecta xeque-mate ao final da sequência de lances', () async {
     // Mate do louco: 1.f3 e5 2.g4 Dh4# — tabuleiro livre (sem engine),
     // todos os lances entram como lances do "jogador".

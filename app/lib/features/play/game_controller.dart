@@ -54,6 +54,37 @@ class GameController extends Notifier<GameState> {
     );
   }
 
+  /// Desfaz o último lance (Modo Análise). `Position` do dartchess é
+  /// imutável — sem operação de "pop" —, então desfazer é um replay: refaz o
+  /// tabuleiro do zero a partir de `Chess.initial` reaplicando o histórico
+  /// sem o último lance.
+  void undoMove() {
+    if (state.mode != GameMode.analysis || state.sanHistory.isEmpty) return;
+    final newHistory = state.sanHistory.sublist(0, state.sanHistory.length - 1);
+    Position position = Chess.initial;
+    Move? lastMove;
+    for (final san in newHistory) {
+      final move = position.parseSan(san);
+      if (move == null) return;
+      final (next, _) = position.makeSan(move);
+      lastMove = move;
+      position = next;
+    }
+    // Construído diretamente (não via copyWith): copyWith usa o padrão
+    // `campo ?? this.campo`, que não consegue expressar "zerar lastMove"
+    // quando o histórico esvazia.
+    state = GameState(
+      position: position,
+      sanHistory: newHistory,
+      playerSide: state.playerSide,
+      skillLevel: state.skillLevel,
+      mode: state.mode,
+      orientation: state.orientation,
+      lastMove: lastMove,
+      engineThinking: state.engineThinking,
+    );
+  }
+
   Future<void> playUserMove(Move move) async {
     if (state.engineThinking || state.isGameOver) return;
     if (!state.position.isLegal(move)) return;
