@@ -125,34 +125,34 @@ void main() {
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(BoardScreen));
-    ProviderScope.containerOf(context, listen: false)
-        .read(gameControllerProvider.notifier)
-        .startAnalysisMode();
+    ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(gameControllerProvider.notifier).startAnalysisMode();
     await tester.pumpAndSettle();
 
     final chessboard = tester.widget<Chessboard>(find.byType(Chessboard));
     expect(chessboard.controller.game.playerSide, PlayerSide.both);
   });
 
-  testWidgets(
-    'Modo Análise: virar tabuleiro muda a orientação do Chessboard',
-    (tester) async {
-      await tester.pumpWidget(makeApp(FakeEngine()));
-      await tester.pumpAndSettle();
+  testWidgets('Modo Análise: virar tabuleiro muda a orientação do Chessboard', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp(FakeEngine()));
+    await tester.pumpAndSettle();
 
-      final context = tester.element(find.byType(BoardScreen));
-      final controller = ProviderScope.containerOf(
-        context,
-        listen: false,
-      ).read(gameControllerProvider.notifier);
-      controller.startAnalysisMode();
-      controller.flipBoard();
-      await tester.pumpAndSettle();
+    final context = tester.element(find.byType(BoardScreen));
+    final controller = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+    controller.flipBoard();
+    await tester.pumpAndSettle();
 
-      final chessboard = tester.widget<Chessboard>(find.byType(Chessboard));
-      expect(chessboard.orientation, Side.black);
-    },
-  );
+    final chessboard = tester.widget<Chessboard>(find.byType(Chessboard));
+    expect(chessboard.orientation, Side.black);
+  });
 }
 
 class FakeEngineOpeningE4 implements ChessEngineApi {
