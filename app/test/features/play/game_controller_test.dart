@@ -329,6 +329,65 @@ void main() {
     expect(engine.skillLevels, contains(15));
   });
 
+  test('renameCurrentGame atualiza só o gameName', () {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    final before = container.read(gameControllerProvider);
+
+    controller.renameCurrentGame('Novo nome');
+
+    final after = container.read(gameControllerProvider);
+    expect(after.gameName, 'Novo nome');
+    expect(after.gameId, before.gameId);
+  });
+
+  test('resetIfActiveGame não faz nada se o id não é o ativo', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    final before = container.read(gameControllerProvider);
+
+    await controller.resetIfActiveGame('outro-id-qualquer');
+
+    expect(container.read(gameControllerProvider), same(before));
+  });
+
+  test(
+    'resetIfActiveGame reinicia em Modo Análise quando o id ativo bate',
+    () async {
+      final container = makeContainer(FakeEngine('e7e5'));
+      final controller = container.read(gameControllerProvider.notifier);
+      controller.startAnalysisMode();
+      final activeId = container.read(gameControllerProvider).gameId;
+
+      await controller.resetIfActiveGame(activeId);
+
+      final state = container.read(gameControllerProvider);
+      expect(state.mode, GameMode.analysis);
+      expect(state.sanHistory, isEmpty);
+      expect(state.gameId, isNot(activeId));
+    },
+  );
+
+  test(
+    'resetIfActiveGame reinicia em playVsEngine preservando playerSide',
+    () async {
+      final container = makeContainer(FakeEngine('e2e4'));
+      final controller = container.read(gameControllerProvider.notifier);
+      await controller.newGame(playerSide: Side.black, skillLevel: 8);
+      final activeId = container.read(gameControllerProvider).gameId;
+
+      await controller.resetIfActiveGame(activeId);
+
+      final state = container.read(gameControllerProvider);
+      expect(state.mode, GameMode.playVsEngine);
+      expect(state.playerSide, Side.black);
+      expect(state.skillLevel, 8);
+      // newGame com playerSide preto reabre com o lance do engine.
+      expect(state.sanHistory, ['e4']);
+      expect(state.gameId, isNot(activeId));
+    },
+  );
+
   test('detecta xeque-mate ao final da sequência de lances', () async {
     // Mate do louco: 1.f3 e5 2.g4 Dh4# — tabuleiro livre (sem engine),
     // todos os lances entram como lances do "jogador".

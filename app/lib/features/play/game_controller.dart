@@ -143,6 +143,25 @@ class GameController extends Notifier<GameState> {
     }
   }
 
+  /// Renomeia a partida corrente — persistida pelo AutosaveController como
+  /// qualquer outra mudança de estado, sem chamada direta ao repositório
+  /// aqui.
+  void renameCurrentGame(String name) {
+    state = state.copyWith(gameName: name);
+  }
+
+  /// Se [deletedId] for a partida ativa, reinicia para uma partida nova no
+  /// mesmo modo — evita que o autosave recrie o arquivo recém-apagado no
+  /// próximo lance.
+  Future<void> resetIfActiveGame(String deletedId) async {
+    if (state.gameId != deletedId) return;
+    if (state.mode == GameMode.analysis) {
+      startAnalysisMode();
+    } else {
+      await newGame(playerSide: state.playerSide, skillLevel: state.skillLevel);
+    }
+  }
+
   Future<void> playUserMove(Move move) async {
     if (state.engineThinking || state.isGameOver) return;
     if (!state.position.isLegal(move)) return;
