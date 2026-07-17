@@ -255,6 +255,80 @@ void main() {
     expect(container.read(gameControllerProvider).orientation, Side.white);
   });
 
+  test('loadGame reconstrói uma partida vs. engine salva', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+
+    await controller.loadGame(
+      id: 'saved-1',
+      name: 'Partida salva',
+      mode: GameMode.playVsEngine,
+      sanHistory: const ['e4', 'e5', 'Nf3'],
+      playerSide: Side.black,
+      skillLevel: 5,
+    );
+
+    final state = container.read(gameControllerProvider);
+    expect(state.gameId, 'saved-1');
+    expect(state.gameName, 'Partida salva');
+    expect(state.mode, GameMode.playVsEngine);
+    expect(state.sanHistory, ['e4', 'e5', 'Nf3']);
+    expect(state.playerSide, Side.black);
+    expect(state.skillLevel, 5);
+    expect(state.orientation, Side.black);
+    expect(state.position.turn, Side.black);
+  });
+
+  test('loadGame reconstrói uma partida de análise salva', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+
+    await controller.loadGame(
+      id: 'saved-2',
+      name: 'Análise salva',
+      mode: GameMode.analysis,
+      sanHistory: const ['d4', 'd5'],
+    );
+
+    final state = container.read(gameControllerProvider);
+    expect(state.mode, GameMode.analysis);
+    expect(state.orientation, Side.white);
+    expect(state.sanHistory, ['d4', 'd5']);
+  });
+
+  test('loadGame trunca o histórico num lance inválido sem travar', () async {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+
+    await controller.loadGame(
+      id: 'saved-3',
+      name: 'Corrompida',
+      mode: GameMode.analysis,
+      sanHistory: const ['e4', 'e5', 'lixo-invalido', 'Nf3'],
+    );
+
+    final state = container.read(gameControllerProvider);
+    expect(state.sanHistory, ['e4', 'e5']);
+    expect(state.lastMove, isNotNull);
+  });
+
+  test('loadGame aplica o skillLevel no engine quando vs. engine', () async {
+    final engine = FakeEngine('e7e5');
+    final container = makeContainer(engine);
+    final controller = container.read(gameControllerProvider.notifier);
+
+    await controller.loadGame(
+      id: 'saved-4',
+      name: 'Skill customizado',
+      mode: GameMode.playVsEngine,
+      sanHistory: const [],
+      playerSide: Side.white,
+      skillLevel: 15,
+    );
+
+    expect(engine.skillLevels, contains(15));
+  });
+
   test('detecta xeque-mate ao final da sequência de lances', () async {
     // Mate do louco: 1.f3 e5 2.g4 Dh4# — tabuleiro livre (sem engine),
     // todos os lances entram como lances do "jogador".

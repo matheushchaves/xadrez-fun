@@ -94,6 +94,55 @@ class GameController extends Notifier<GameState> {
     );
   }
 
+  /// Carrega uma partida salva, substituindo a partida corrente. Recebe
+  /// campos primitivos (não `SavedGame`) para este arquivo não depender da
+  /// feature `saves` — quem chama (tela de partidas salvas, diálogo de
+  /// retomar) faz o mapeamento.
+  Future<void> loadGame({
+    required String id,
+    required String name,
+    required GameMode mode,
+    required List<String> sanHistory,
+    Side? playerSide,
+    int? skillLevel,
+  }) async {
+    Position position = Chess.initial;
+    Move? lastMove;
+    final replayed = <String>[];
+    for (final san in sanHistory) {
+      final move = position.parseSan(san);
+      if (move == null) break;
+      final (next, sanApplied) = position.makeSan(move);
+      lastMove = move;
+      position = next;
+      replayed.add(sanApplied);
+    }
+    final resolvedPlayerSide = mode == GameMode.playVsEngine
+        ? (playerSide ?? Side.white)
+        : state.playerSide;
+    final resolvedSkillLevel = mode == GameMode.playVsEngine
+        ? (skillLevel ?? 10)
+        : state.skillLevel;
+    final orientation = mode == GameMode.playVsEngine
+        ? resolvedPlayerSide
+        : Side.white;
+    state = GameState(
+      position: position,
+      sanHistory: replayed,
+      playerSide: resolvedPlayerSide,
+      skillLevel: resolvedSkillLevel,
+      mode: mode,
+      orientation: orientation,
+      gameId: id,
+      gameName: name,
+      lastMove: lastMove,
+    );
+    if (mode == GameMode.playVsEngine) {
+      final engine = await ref.read(engineProvider.future);
+      await engine?.setSkillLevel(resolvedSkillLevel);
+    }
+  }
+
   Future<void> playUserMove(Move move) async {
     if (state.engineThinking || state.isGameOver) return;
     if (!state.position.isLegal(move)) return;
