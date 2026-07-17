@@ -25,6 +25,7 @@ class AnalysisState {
   const AnalysisState({
     this.analyzing = false,
     this.eval,
+    this.evalFen,
     this.evalText,
     this.probabilities,
     this.topMoves = const [],
@@ -32,6 +33,11 @@ class AnalysisState {
 
   final bool analyzing;
   final EngineEval? eval;
+
+  /// FEN da posição a que [eval] se refere — permite a quem combina [eval]
+  /// com uma posição obtida de outra fonte (ex.: `strategyAnalysisProvider`)
+  /// detectar quando a avaliação está desatualizada em relação a ela.
+  final String? evalFen;
   final String? evalText;
   final WinProbabilities? probabilities;
   final List<TopMove> topMoves;
@@ -40,6 +46,7 @@ class AnalysisState {
     return AnalysisState(
       analyzing: analyzing ?? this.analyzing,
       eval: eval,
+      evalFen: evalFen,
       evalText: evalText,
       probabilities: probabilities,
       topMoves: topMoves,
@@ -101,6 +108,7 @@ class AnalysisController extends Notifier<AnalysisState> {
       }
       state = AnalysisState(
         eval: eval,
+        evalFen: fen,
         evalText: formatEvaluation(eval),
         probabilities: winProbabilities(eval),
         topMoves: [for (final line in lines) ?_toTopMove(line, position)],

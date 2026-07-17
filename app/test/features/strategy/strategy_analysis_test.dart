@@ -37,9 +37,52 @@ void main() {
     // Sem avaliação (stub devolve null): o texto de avaliação fica nulo.
     expect(analysis.plan.evaluationText, isNull);
   });
+
+  test('usa a avaliação quando evalFen corresponde à posição corrente', () {
+    final container = ProviderContainer(
+      overrides: [
+        engineProvider.overrideWith((ref) => Future.value(null)),
+        analysisControllerProvider.overrideWith(
+          () => _StubAnalysisController(
+            AnalysisState(eval: const CpEval(31), evalFen: Chess.initial.fen),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final analysis = container.read(strategyAnalysisProvider);
+    expect(analysis.plan.evaluationText, isNotNull);
+  });
+
+  test('ignora a avaliação quando evalFen é de uma posição diferente da '
+      'corrente (engine ainda pensando na resposta ao último lance)', () {
+    const staleFen =
+        'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2';
+    final container = ProviderContainer(
+      overrides: [
+        engineProvider.overrideWith((ref) => Future.value(null)),
+        analysisControllerProvider.overrideWith(
+          () => _StubAnalysisController(
+            const AnalysisState(eval: CpEval(31), evalFen: staleFen),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // gameControllerProvider começa na posição inicial, que não bate com
+    // staleFen: a avaliação (de uma posição diferente) deve ser ignorada.
+    final analysis = container.read(strategyAnalysisProvider);
+    expect(analysis.plan.evaluationText, isNull);
+  });
 }
 
 class _StubAnalysisController extends AnalysisController {
+  _StubAnalysisController([this._state = const AnalysisState()]);
+
+  final AnalysisState _state;
+
   @override
-  AnalysisState build() => const AnalysisState();
+  AnalysisState build() => _state;
 }

@@ -57,8 +57,18 @@ StrategyAnalysis computeStrategyAnalysis(
 
 /// Deriva a análise estratégica da posição corrente e da avaliação já
 /// calculada pelo `AnalysisController` — sem consulta adicional ao engine.
+///
+/// O `AnalysisController` só reanalisa quando volta a ser a vez do jogador
+/// (evita gastar consultas UCI enquanto o engine já está pensando na
+/// resposta), então `eval` pode ficar temporariamente desatualizado em
+/// relação à posição corrente logo após um lance. Comparar `evalFen` com a
+/// posição corrente evita misturar a avaliação de uma posição com os dados
+/// (fase, características) de outra.
 final strategyAnalysisProvider = Provider<StrategyAnalysis>((ref) {
   final position = ref.watch(gameControllerProvider).position;
-  final eval = ref.watch(analysisControllerProvider).eval;
+  final analysisState = ref.watch(analysisControllerProvider);
+  final eval = analysisState.evalFen == position.fen
+      ? analysisState.eval
+      : null;
   return computeStrategyAnalysis(position, eval);
 });
