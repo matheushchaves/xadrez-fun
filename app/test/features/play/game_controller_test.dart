@@ -62,6 +62,13 @@ void main() {
     expect(state.isGameOver, isFalse);
   });
 
+  test('estado inicial: modo playVsEngine, orientação brancas', () {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final state = container.read(gameControllerProvider);
+    expect(state.mode, GameMode.playVsEngine);
+    expect(state.orientation, Side.white);
+  });
+
   test('lance do jogador dispara resposta do engine', () async {
     final engine = FakeEngine('e7e5');
     final container = makeContainer(engine);

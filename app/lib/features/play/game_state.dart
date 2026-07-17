@@ -1,6 +1,10 @@
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/foundation.dart';
 
+/// Modo da partida: contra o engine (auto-play) ou Modo Análise (o usuário
+/// move as duas cores, sem resposta automática).
+enum GameMode { playVsEngine, analysis }
+
 /// Estado imutável de uma partida.
 @immutable
 class GameState {
@@ -9,6 +13,8 @@ class GameState {
     required this.sanHistory,
     required this.playerSide,
     required this.skillLevel,
+    required this.mode,
+    required this.orientation,
     this.lastMove,
     this.engineThinking = false,
   });
@@ -19,12 +25,21 @@ class GameState {
         sanHistory: const [],
         playerSide: Side.white,
         skillLevel: 10,
+        mode: GameMode.playVsEngine,
+        orientation: Side.white,
       );
 
   final Position position;
   final List<String> sanHistory;
   final Side playerSide;
   final int skillLevel;
+  final GameMode mode;
+
+  /// Lado exibido embaixo do tabuleiro. Em [GameMode.playVsEngine] segue
+  /// [playerSide]; em [GameMode.analysis] é independente e alternável via
+  /// `GameController.flipBoard()`. Também usado pelo painel Estratégia para
+  /// decidir a perspectiva "seu/adversário".
+  final Side orientation;
   final Move? lastMove;
   final bool engineThinking;
 
@@ -50,6 +65,8 @@ class GameState {
     List<String>? sanHistory,
     Side? playerSide,
     int? skillLevel,
+    GameMode? mode,
+    Side? orientation,
     Move? lastMove,
     bool? engineThinking,
   }) {
@@ -58,6 +75,8 @@ class GameState {
       sanHistory: sanHistory ?? this.sanHistory,
       playerSide: playerSide ?? this.playerSide,
       skillLevel: skillLevel ?? this.skillLevel,
+      mode: mode ?? this.mode,
+      orientation: orientation ?? this.orientation,
       lastMove: lastMove ?? this.lastMove,
       engineThinking: engineThinking ?? this.engineThinking,
     );
