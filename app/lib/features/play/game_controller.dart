@@ -85,6 +85,13 @@ class GameController extends Notifier<GameState> {
     );
   }
 
+  /// Alterna o lado exibido embaixo do tabuleiro (Modo Análise).
+  void flipBoard() {
+    state = state.copyWith(
+      orientation: state.orientation == Side.white ? Side.black : Side.white,
+    );
+  }
+
   Future<void> playUserMove(Move move) async {
     if (state.engineThinking || state.isGameOver) return;
     if (!state.position.isLegal(move)) return;

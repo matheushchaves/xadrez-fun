@@ -215,6 +215,19 @@ void main() {
     expect(container.read(gameControllerProvider), same(before));
   });
 
+  test('flipBoard alterna a orientação', () {
+    final container = makeContainer(FakeEngine('e7e5'));
+    final controller = container.read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+    expect(container.read(gameControllerProvider).orientation, Side.white);
+
+    controller.flipBoard();
+    expect(container.read(gameControllerProvider).orientation, Side.black);
+
+    controller.flipBoard();
+    expect(container.read(gameControllerProvider).orientation, Side.white);
+  });
+
   test('detecta xeque-mate ao final da sequência de lances', () async {
     // Mate do louco: 1.f3 e5 2.g4 Dh4# — tabuleiro livre (sem engine),
     // todos os lances entram como lances do "jogador".
