@@ -72,6 +72,7 @@ class _SavedGamesScreenState extends ConsumerState<SavedGamesScreen> {
     } else {
       await repository.rename(summary.id, newName);
     }
+    if (!mounted) return;
     _reload();
   }
 
@@ -100,6 +101,7 @@ class _SavedGamesScreenState extends ConsumerState<SavedGamesScreen> {
     await ref
         .read(gameControllerProvider.notifier)
         .resetIfActiveGame(summary.id);
+    if (!mounted) return;
     _reload();
   }
 
