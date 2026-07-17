@@ -35,6 +35,11 @@ class _GameControlsState extends ConsumerState<GameControls>
   String _statusText(GameState state) {
     final result = state.resultText;
     if (result != null) return result;
+    if (state.mode == GameMode.analysis) {
+      return state.position.turn == Side.white
+          ? 'Vez das brancas.'
+          : 'Vez das pretas.';
+    }
     if (state.engineThinking) return 'Stockfish pensando…';
     final isPlayerTurn = state.position.turn == state.playerSide;
     return isPlayerTurn ? 'Sua vez.' : 'Vez do adversário.';
@@ -85,6 +90,13 @@ class _GameControlsState extends ConsumerState<GameControls>
                       skillLevel: _skill.round(),
                     ),
               child: const Text('Jogar de pretas'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: state.engineThinking
+                  ? null
+                  : () => controller.startAnalysisMode(),
+              child: const Text('Modo Análise'),
             ),
             const SizedBox(height: 16),
             Text('Lances', style: Theme.of(context).textTheme.titleSmall),

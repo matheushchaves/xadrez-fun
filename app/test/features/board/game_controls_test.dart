@@ -58,4 +58,18 @@ void main() {
 
     expect(find.textContaining('Plano estratégico'), findsOneWidget);
   });
+
+  testWidgets('botão Modo Análise inicia o modo e atualiza o status', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_makeControls());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Modo Análise'), findsOneWidget);
+
+    await tester.tap(find.text('Modo Análise'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vez das brancas.'), findsOneWidget);
+  });
 }
