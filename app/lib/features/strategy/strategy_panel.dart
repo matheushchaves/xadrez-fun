@@ -19,12 +19,12 @@ class StrategyPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analysis = ref.watch(strategyAnalysisProvider);
-    final playerSide = ref.watch(gameControllerProvider).playerSide;
+    final orientation = ref.watch(gameControllerProvider).orientation;
 
-    final (yourThreats, enemyThreats) = playerSide == Side.white
+    final (yourThreats, enemyThreats) = orientation == Side.white
         ? (analysis.threats.whiteThreats, analysis.threats.blackThreats)
         : (analysis.threats.blackThreats, analysis.threats.whiteThreats);
-    final (yourWeaknesses, enemyWeaknesses) = playerSide == Side.white
+    final (yourWeaknesses, enemyWeaknesses) = orientation == Side.white
         ? (analysis.weaknesses.white, analysis.weaknesses.black)
         : (analysis.weaknesses.black, analysis.weaknesses.white);
 

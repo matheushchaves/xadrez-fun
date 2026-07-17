@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xadrez_fun/engine/engine_provider.dart';
+import 'package:xadrez_fun/features/play/game_controller.dart';
 import 'package:xadrez_fun/features/strategy/center_control_analyzer.dart';
 import 'package:xadrez_fun/features/strategy/king_safety_analyzer.dart';
 import 'package:xadrez_fun/features/strategy/pawn_structure_analyzer.dart';
@@ -71,8 +72,8 @@ final _fakeAnalysis = StrategyAnalysis(
   ),
 );
 
-Widget _makePanel() {
-  return ProviderScope(
+ProviderContainer _makeContainer() {
+  return ProviderContainer(
     overrides: [
       strategyAnalysisProvider.overrideWithValue(_fakeAnalysis),
       // StrategyPanel lê gameControllerProvider (perspectiva do jogador); o
@@ -80,6 +81,12 @@ Widget _makePanel() {
       // sobrescrever, o teste tentaria resolver um engine de verdade.
       engineProvider.overrideWith((ref) => Future.value(null)),
     ],
+  );
+}
+
+Widget _makePanel(ProviderContainer container) {
+  return UncontrolledProviderScope(
+    container: container,
     child: const MaterialApp(
       home: Scaffold(
         body: SizedBox(width: 280, height: 800, child: StrategyPanel()),
@@ -90,7 +97,9 @@ Widget _makePanel() {
 
 void main() {
   testWidgets('mostra as 8 seções com o conteúdo do provider', (tester) async {
-    await tester.pumpWidget(_makePanel());
+    final container = _makeContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(_makePanel(container));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Plano estratégico'), findsOneWidget);
@@ -108,5 +117,35 @@ void main() {
     expect(find.textContaining('Cavalo em e6 não defendido!'), findsOneWidget);
     expect(find.textContaining('Rei ainda não rocou'), findsOneWidget);
     expect(find.textContaining('+0.31 (Posição equilibrada)'), findsOneWidget);
+  });
+
+  testWidgets('perspectiva "seu/adversário" acompanha a orientação', (
+    tester,
+  ) async {
+    final container = _makeContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(_makePanel(container));
+    await tester.pumpAndSettle();
+
+    // Orientação inicial (brancas): a ameaça das pretas ("Cavalo em e6...")
+    // é "contra você" — aparece ANTES do rótulo "Suas ameaças" na coluna.
+    // Nota: BulletList prefixa cada item com "• ", então o texto renderizado
+    // exato inclui o marcador (find.text() exige correspondência exata).
+    final threatY = tester
+        .getTopLeft(find.text('• Cavalo em e6 não defendido!'))
+        .dy;
+    final yoursLabelY = tester.getTopLeft(find.text('Suas ameaças')).dy;
+    expect(threatY, lessThan(yoursLabelY));
+
+    container.read(gameControllerProvider.notifier).flipBoard();
+    await tester.pumpAndSettle();
+
+    // Orientação pretas: a mesma ameaça agora é seu ataque — aparece DEPOIS
+    // do rótulo "Suas ameaças".
+    final threatY2 = tester
+        .getTopLeft(find.text('• Cavalo em e6 não defendido!'))
+        .dy;
+    final yoursLabelY2 = tester.getTopLeft(find.text('Suas ameaças')).dy;
+    expect(threatY2, greaterThan(yoursLabelY2));
   });
 }
