@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../analysis/analysis_panel.dart';
 import '../play/game_controller.dart';
+import '../saves/saved_games_screen.dart';
 import '../strategy/strategy_panel.dart';
 
 /// Painel lateral: status da partida, nível do engine, nova partida e
@@ -125,6 +126,15 @@ class _GameControlsState extends ConsumerState<GameControls>
                         ],
                       ),
                     ],
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SavedGamesScreen(),
+                        ),
+                      ),
+                      child: const Text('Partidas salvas'),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Lances',

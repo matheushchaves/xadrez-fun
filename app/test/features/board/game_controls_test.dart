@@ -4,6 +4,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:xadrez_fun/engine/engine_api.dart';
 import 'package:xadrez_fun/engine/engine_provider.dart';
 import 'package:xadrez_fun/features/board/game_controls.dart';
+import 'package:xadrez_fun/features/saves/games_repository.dart';
+import 'package:xadrez_fun/features/saves/saved_game.dart';
+import 'package:xadrez_fun/features/saves/saved_games_screen.dart';
+
+class _FakeGamesRepository implements GamesRepository {
+  @override
+  Future<void> save(SavedGame game) async {}
+
+  @override
+  Future<SavedGame?> load(String id) async => null;
+
+  @override
+  Future<List<SavedGameSummary>> listGames() async => const [];
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> rename(String id, String name) async {}
+}
 
 class FakeEngine implements ChessEngineApi {
   @override
@@ -27,6 +47,7 @@ Widget _makeControls() {
   return ProviderScope(
     overrides: [
       engineProvider.overrideWith((ref) => Future.value(FakeEngine())),
+      gamesRepositoryProvider.overrideWithValue(_FakeGamesRepository()),
     ],
     child: MaterialApp(
       home: Scaffold(
@@ -96,5 +117,15 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Desfazer'),
     );
     expect(undoButton.onPressed, isNull);
+  });
+
+  testWidgets('botão Partidas salvas abre a tela de partidas', (tester) async {
+    await tester.pumpWidget(_makeControls());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Partidas salvas'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SavedGamesScreen), findsOneWidget);
   });
 }
