@@ -58,7 +58,7 @@ class GameController extends Notifier<GameState> {
     if (state.engineThinking || state.isGameOver) return;
     if (!state.position.isLegal(move)) return;
     _applyMove(move);
-    if (!state.isGameOver) {
+    if (state.mode == GameMode.playVsEngine && !state.isGameOver) {
       await _engineMove();
     }
   }

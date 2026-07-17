@@ -149,6 +149,21 @@ void main() {
     },
   );
 
+  test('em Modo Análise, playUserMove não dispara o engine', () async {
+    final engine = FakeEngine('e7e5');
+    final container = makeContainer(engine);
+    final controller = container.read(gameControllerProvider.notifier);
+    controller.startAnalysisMode();
+
+    await controller.playUserMove(Move.parse('e2e4')!);
+    await controller.playUserMove(Move.parse('e7e5')!);
+
+    final state = container.read(gameControllerProvider);
+    expect(state.sanHistory, ['e4', 'e5']);
+    expect(state.position.turn, Side.white);
+    expect(engine.fensAsked, isEmpty);
+  });
+
   test('detecta xeque-mate ao final da sequência de lances', () async {
     // Mate do louco: 1.f3 e5 2.g4 Dh4# — tabuleiro livre (sem engine),
     // todos os lances entram como lances do "jogador".
