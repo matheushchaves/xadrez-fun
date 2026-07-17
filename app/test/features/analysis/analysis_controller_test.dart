@@ -171,6 +171,35 @@ void main() {
     expect(engine.evaluatedFens, hasLength(1));
   });
 
+  test(
+    'Modo Análise: analisa a posição após o lance das pretas também',
+    () async {
+      final engine = FakeAnalysisEngine();
+      final container = makeContainer(engine);
+      container.read(analysisControllerProvider);
+      await settle(container);
+
+      final game = container.read(gameControllerProvider.notifier);
+      game.startAnalysisMode();
+      await settle(container);
+      engine.evaluatedFens.clear();
+
+      await game.playUserMove(Move.parse('e2e4')!);
+      await settle(container);
+      final fenAfterWhite = container.read(gameControllerProvider).position.fen;
+
+      await game.playUserMove(Move.parse('e7e5')!);
+      await settle(container);
+      final fenAfterBlack = container.read(gameControllerProvider).position.fen;
+
+      // Antes desta mudança, o gate `turn != playerSide` (playerSide fica
+      // fixo em brancas) pulava a análise logo após o lance das brancas,
+      // porque aí é a vez das pretas — e em Modo Análise não existe "vez do
+      // engine" para justificar esse gate.
+      expect(engine.evaluatedFens, [fenAfterWhite, fenAfterBlack]);
+    },
+  );
+
   test('mate na avaliação vira texto e probabilidade de mate', () async {
     final engine = FakeAnalysisEngine(
       eval: const MateEval(-2),

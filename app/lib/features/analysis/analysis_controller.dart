@@ -80,8 +80,14 @@ class AnalysisController extends Notifier<AnalysisState> {
     if (game.engineThinking) return;
     // Só analisa posições que o jogador enfrenta (ou o fim da partida):
     // durante a vez do engine a posição é transitória e a consulta
-    // atrasaria o bestmove (comandos UCI são serializados).
-    if (!game.isGameOver && game.position.turn != game.playerSide) return;
+    // atrasaria o bestmove (comandos UCI são serializados). Em Modo Análise
+    // esse gate não se aplica — o engine nunca joga sozinho, então não há
+    // "vez do engine" transitória; toda posição nova é analisada.
+    if (game.mode == GameMode.playVsEngine &&
+        !game.isGameOver &&
+        game.position.turn != game.playerSide) {
+      return;
+    }
     final fen = game.position.fen;
     if (fen == _lastAnalyzedFen) return;
     _lastAnalyzedFen = fen;
