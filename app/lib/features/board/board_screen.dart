@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../engine/engine_provider.dart';
 import '../play/game_controller.dart';
+import '../saves/autosave_controller.dart';
+import '../saves/games_repository.dart';
+import '../saves/resume_prompt.dart';
+import '../saves/saved_game.dart';
 import 'game_controls.dart';
 
 /// Tela principal: tabuleiro à esquerda, controles à direita.
@@ -17,6 +21,7 @@ class BoardScreen extends ConsumerStatefulWidget {
 
 class _BoardScreenState extends ConsumerState<BoardScreen> {
   late final ChessboardController _boardController;
+  bool _resumePromptShown = false;
 
   @override
   void initState() {
@@ -61,10 +66,63 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
     ref.read(gameControllerProvider.notifier).playUserMove(move);
   }
 
+  Future<void> _showResumeDialog(SavedGameSummary summary) async {
+    final modeName = summary.mode == GameMode.analysis
+        ? 'Modo Análise'
+        : 'vs. Stockfish';
+    final continuar = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Partida anterior encontrada'),
+        content: Text(
+          '${summary.name} — $modeName, ${summary.moveCount} lances.\n'
+          'Deseja continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Nova partida'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+    if (continuar != true || !mounted) return;
+    final repository = ref.read(gamesRepositoryProvider);
+    final data = await repository.load(summary.id);
+    if (data == null || !mounted) return;
+    await ref
+        .read(gameControllerProvider.notifier)
+        .loadGame(
+          id: data.id,
+          name: data.name,
+          mode: data.mode,
+          sanHistory: data.sanHistory,
+          playerSide: data.playerSide,
+          skillLevel: data.skillLevel,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     final engineAvailable = ref.watch(engineProvider).value != null;
     final status = ref.watch(engineStatusProvider);
+    ref.watch(autosaveControllerProvider);
+    ref.listen<AsyncValue<SavedGameSummary?>>(resumeCandidateProvider, (
+      previous,
+      next,
+    ) {
+      final summary = next.value;
+      if (_resumePromptShown || summary == null) return;
+      _resumePromptShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showResumeDialog(summary);
+      });
+    });
     final (bannerText, bannerIsError) = switch (status) {
       EngineNotFound() => (
         'Stockfish não encontrado — instale com: brew install stockfish. '

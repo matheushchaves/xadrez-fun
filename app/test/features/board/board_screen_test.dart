@@ -9,6 +9,8 @@ import 'package:xadrez_fun/engine/engine_api.dart';
 import 'package:xadrez_fun/engine/engine_provider.dart';
 import 'package:xadrez_fun/features/board/board_screen.dart';
 import 'package:xadrez_fun/features/play/game_controller.dart';
+import 'package:xadrez_fun/features/saves/games_repository.dart';
+import 'package:xadrez_fun/features/saves/saved_game.dart';
 
 class FakeEngine implements ChessEngineApi {
   @override
@@ -28,13 +30,55 @@ class FakeEngine implements ChessEngineApi {
   Future<void> dispose() async {}
 }
 
-Widget makeApp(ChessEngineApi? engine, {EngineStatus? status}) {
+class _FakeGamesRepository implements GamesRepository {
+  final saved = <String, SavedGame>{};
+
+  @override
+  Future<void> save(SavedGame game) async => saved[game.id] = game;
+
+  @override
+  Future<SavedGame?> load(String id) async => saved[id];
+
+  @override
+  Future<List<SavedGameSummary>> listGames() async {
+    final list = [
+      for (final game in saved.values)
+        SavedGameSummary(
+          id: game.id,
+          name: game.name,
+          mode: game.mode,
+          moveCount: game.sanHistory.length,
+          timestamp: game.timestamp,
+        ),
+    ];
+    list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return list;
+  }
+
+  @override
+  Future<void> delete(String id) async => saved.remove(id);
+
+  @override
+  Future<void> rename(String id, String name) async {
+    final game = saved[id];
+    if (game != null) saved[id] = game.copyWith(name: name);
+  }
+}
+
+Widget makeApp(
+  ChessEngineApi? engine, {
+  EngineStatus? status,
+  GamesRepository? repository,
+}) {
   return ProviderScope(
     overrides: [
       engineProvider.overrideWith((ref) => Future.value(engine)),
       engineStatusProvider.overrideWithValue(
         status ??
             (engine == null ? const EngineNotFound() : const EngineReady()),
+      ),
+      gamesRepositoryProvider.overrideWithValue(
+        repository ?? _FakeGamesRepository(),
       ),
     ],
     child: const MaterialApp(home: BoardScreen()),
@@ -152,6 +196,69 @@ void main() {
 
     final chessboard = tester.widget<Chessboard>(find.byType(Chessboard));
     expect(chessboard.orientation, Side.black);
+  });
+
+  testWidgets('sem partida salva, não mostra diálogo de retomar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp(FakeEngine()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Partida anterior encontrada'), findsNothing);
+  });
+
+  testWidgets(
+    'com partida salva, mostra diálogo e Continuar carrega a partida',
+    (tester) async {
+      final repository = _FakeGamesRepository();
+      repository.saved['id1'] = SavedGame(
+        id: 'id1',
+        name: 'Partida antiga',
+        mode: GameMode.analysis,
+        timestamp: DateTime.utc(2026, 7, 17),
+        sanHistory: const ['e4', 'e5'],
+      );
+      await tester.pumpWidget(makeApp(FakeEngine(), repository: repository));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Partida anterior encontrada'), findsOneWidget);
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(BoardScreen));
+      final state = ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(gameControllerProvider);
+      expect(state.sanHistory, ['e4', 'e5']);
+    },
+  );
+
+  testWidgets('"Nova partida" no diálogo não apaga a partida salva', (
+    tester,
+  ) async {
+    final repository = _FakeGamesRepository();
+    repository.saved['id1'] = SavedGame(
+      id: 'id1',
+      name: 'Partida antiga',
+      mode: GameMode.analysis,
+      timestamp: DateTime.utc(2026, 7, 17),
+      sanHistory: const ['e4', 'e5'],
+    );
+    await tester.pumpWidget(makeApp(FakeEngine(), repository: repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nova partida'));
+    await tester.pumpAndSettle();
+
+    expect(repository.saved.containsKey('id1'), isTrue);
+    final context = tester.element(find.byType(BoardScreen));
+    final state = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(gameControllerProvider);
+    expect(state.sanHistory, isEmpty);
   });
 }
 
