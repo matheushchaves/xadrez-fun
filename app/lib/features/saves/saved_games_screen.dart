@@ -112,6 +112,11 @@ class _SavedGamesScreenState extends ConsumerState<SavedGamesScreen> {
       body: FutureBuilder<List<SavedGameSummary>>(
         future: _gamesFuture,
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text('Erro ao carregar partidas salvas.'),
+            );
+          }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }

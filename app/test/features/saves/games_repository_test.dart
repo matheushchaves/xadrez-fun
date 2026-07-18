@@ -128,6 +128,27 @@ void main() {
     expect(games.single.id, 'id1');
   });
 
+  test('listGames ignora arquivo com valor de enum inválido', () async {
+    await repository.save(makeGame());
+    final gamesDir = Directory('${tempDir.path}/games');
+    await File('${gamesDir.path}/enum_invalido.json').writeAsString(
+      jsonEncode({
+        'id': 'x',
+        'name': 'y',
+        'mode': 'modo-inventado',
+        'timestamp': '2026-07-17T00:00:00.000Z',
+        'sanHistory': [],
+        'playerSide': null,
+        'skillLevel': null,
+      }),
+    );
+
+    final games = await repository.listGames();
+
+    expect(games, hasLength(1));
+    expect(games.single.id, 'id1');
+  });
+
   test('delete remove a partida', () async {
     final game = makeGame();
     await repository.save(game);
@@ -173,6 +194,27 @@ void main() {
     );
 
     final loaded = await repository.load('tipo_errado');
+
+    expect(loaded, isNull);
+  });
+
+  test('load retorna null quando arquivo tem valor de enum inválido', () async {
+    final dir = await Directory(
+      '${tempDir.path}/games',
+    ).create(recursive: true);
+    await File('${dir.path}/enum_invalido.json').writeAsString(
+      jsonEncode({
+        'id': 'x',
+        'name': 'y',
+        'mode': 'modo-inventado',
+        'timestamp': '2026-07-17T00:00:00.000Z',
+        'sanHistory': [],
+        'playerSide': null,
+        'skillLevel': null,
+      }),
+    );
+
+    final loaded = await repository.load('enum_invalido');
 
     expect(loaded, isNull);
   });

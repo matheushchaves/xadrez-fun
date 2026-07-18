@@ -10,6 +10,7 @@ import 'package:xadrez_fun/features/saves/saved_games_screen.dart';
 
 class FakeGamesRepository implements GamesRepository {
   final saved = <String, SavedGame>{};
+  bool listGamesThrows = false;
 
   @override
   Future<void> save(SavedGame game) async => saved[game.id] = game;
@@ -19,6 +20,9 @@ class FakeGamesRepository implements GamesRepository {
 
   @override
   Future<List<SavedGameSummary>> listGames() async {
+    if (listGamesThrows) {
+      throw Exception('falha simulada ao listar partidas');
+    }
     final list = [
       for (final game in saved.values)
         SavedGameSummary(
@@ -62,6 +66,15 @@ ProviderContainer _makeContainer(FakeGamesRepository repository) {
 }
 
 void main() {
+  testWidgets('mostra mensagem de erro quando listGames falha', (tester) async {
+    final repository = FakeGamesRepository()..listGamesThrows = true;
+    final container = _makeContainer(repository);
+    await tester.pumpWidget(_makeApp(container));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Erro ao carregar partidas salvas.'), findsOneWidget);
+  });
+
   testWidgets('mostra mensagem quando não há partidas salvas', (tester) async {
     final container = _makeContainer(FakeGamesRepository());
     await tester.pumpWidget(_makeApp(container));

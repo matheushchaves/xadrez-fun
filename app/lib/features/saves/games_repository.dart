@@ -59,6 +59,8 @@ class FileGamesRepository implements GamesRepository {
       return null;
     } on TypeError {
       return null;
+    } on ArgumentError {
+      return null;
     }
   }
 
@@ -75,6 +77,8 @@ class FileGamesRepository implements GamesRepository {
       } on FormatException {
         continue;
       } on TypeError {
+        continue;
+      } on ArgumentError {
         continue;
       }
     }
